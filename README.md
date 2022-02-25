@@ -1,8 +1,8 @@
 # llloger
 
-![lua](https://img.shields.io/badge/Lua-any-000090?logo=lua&logoColor=white)
-![katana version](https://img.shields.io/badge/Katana-any-FCB123?logo=katana&logoColor=white)
-[![License](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE.md)
+![lua](https://img.shields.io/badge/Lua-any-4f4f4f?labelColor=000090&logo=lua&logoColor=white)
+![katana version](https://img.shields.io/badge/Katana-any-4f4f4f?labelColor=FCB123&logo=katana&logoColor=black)
+[![License](https://img.shields.io/badge/⚖_license-Apache_2.0-4f4f4f?labelColor=blue)](LICENSE.md)
 
 A simple lua logging module inspired from Python's one.
 Originaly intended to be use with Foundry's Katana software, OpScript feature.
@@ -26,11 +26,17 @@ Originaly intended to be use with Foundry's Katana software, OpScript feature.
 - Options for avoiding message flooding where the same message is repeated a lot of time
 
 
+# Documentation
+
+[![documentation](https://img.shields.io/badge/visit_documentation-blue)](doc/INDEX.md)
+
+> Or see the [./doc directory](doc).
+
 # Legal
 
 Apache License 2.0
 
-See [LICENSE.md](./LICENSE.md) for full licence.
+See [LICENSE.md](LICENSE.md) for full licence.
 
 - ✅ The licensed material and derivatives may be used for commercial purposes.
 - ✅ The licensed material may be distributed.
@@ -42,3 +48,6 @@ See [LICENSE.md](./LICENSE.md) for full licence.
 
 You can request a specific license by contacting me at [monsieurlixm@gmail.com](mailto:monsieurlixm@gmail.com) .
 
+<a href='https://ko-fi.com/E1E3ALNSG' target='_blank'>
+<img height='36' style='border:0px;height:36px;' src='https://cdn.ko-fi.com/cdn/kofi1.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' />
+</a> 
