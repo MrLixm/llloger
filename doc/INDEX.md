@@ -3,7 +3,7 @@
 Welcome on the llloger module's documentation.
 
 [![root](https://img.shields.io/badge/back_to_root-536362?)](../README.md)
-[![next](https://img.shields.io/badge/▶_next_page-developer-4f4f4f?labelColor=fcb434)](DEVELOPER.md)
+[![next](https://img.shields.io/badge/▶_next_page-api-4f4f4f?labelColor=fcb434)](API.md)
 
 
 # Installation
@@ -44,9 +44,9 @@ the top of your OpScript code.
 
 Create a new logger instance :
 
-- Delete the last line `return logging`.
-- Swap it with `local logger = logging:new("YourLoggerName")`. This creates a
-logger instance for use.
+- Delete the last line `return {...}`.
+- Swap it with `local logger = get_logger(nil, "YourLoggerName")`. This creates a
+new logger instance named `YourLoggerName`.
 
 You can then use the `logger` as :
 ```lua
@@ -57,7 +57,7 @@ logger:debug("my message")
 - No dependencies, you can share the Katana file/ OpScript node to anyone easily.
 
 ❌ Cons :
-- Code is muuuch longer and not very readable.
+- Code is muuuch longer and make it very messy.
 - Updating the lllogger module and propagating change to all ever used instances
 is super-hard.
 
@@ -92,7 +92,7 @@ Here is a basic startup snippet :
 
 ```lua
 local logging = require("lllogger")
-local logger = logging:new("Test")
+local logger = logging:get_logger("Test")
 
 logger:debug("this is a debug message")
 
@@ -111,7 +111,7 @@ use the functions or directly override the keys :
 
 ```lua
 local logging = require("lllogger")
-local logger = logging:new("TestFmt")
+local logger = logging:get_logger("TestFmt")
 
 -- these 2 lines does the same thing
 logger.formatting:set_tbl_linebreaks(true)
@@ -149,4 +149,4 @@ sure there is only a few `logger:info` calls.
 ---
 
 [![root](https://img.shields.io/badge/back_to_root-536362?)](../README.md)
-[![next](https://img.shields.io/badge/▶_next_page-developer-4f4f4f?labelColor=fcb434)](DEVELOPER.md)
+[![next](https://img.shields.io/badge/▶_next_page-api-4f4f4f?labelColor=fcb434)](API.md)
