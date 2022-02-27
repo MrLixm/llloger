@@ -87,6 +87,22 @@ Return name of the current logger instance.
 str:
 ``` 
 
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Logger.ctx
+
+A string representing the last context from where the logger was called from.
+You should only set this.
+
+It is reset each time a message in log, so the goal is to set it before logging
+a message.
+
+You also need to have `Logger.formatting.display_context` set to true to have
+it displayed in the final message.
+
+```
+str:
+``` 
+
+
 # ![class](https://img.shields.io/badge/class-6F5ADC) StrFmtSettings
 
 Modify StrFmtSettings settings you can use it as table and modify its key as usual
@@ -94,7 +110,7 @@ or use the pre-build methods.
 
 See the default value to see what type is expecte for the argument.
 
-## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) StrFmtSettings.display_line 
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) StrFmtSettings.display_context 
 > `default=true`
 > 
 > True to display the line from where the logger was called from.
@@ -143,7 +159,7 @@ See the default value to see what type is expecte for the argument.
 > If true, every string is wrap with the `""` around. 
 
 
-## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_display_line
+## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_display_context
 ## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_blocks_duplicate
 ## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_num_round
 ## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_tbl_indent

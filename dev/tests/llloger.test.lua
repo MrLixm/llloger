@@ -88,13 +88,17 @@ runs[#runs + 1] = function ()
 
   logger:set_level("debug")
 
-  logger:debug("With line.")
-  logger:info("With line.")
-  logger:error("With line.")
-  logger.formatting:set_display_line(false)
-  logger:debug("Without line.")
-  logger:info("Without line.")
-  logger:error("Without line.")
+  logger:debug("Without context.")
+  logger:info("Without context.")
+  logger:error("With context.")
+  logger.ctx = "Context from line 94 !"
+  logger:info("With context.")
+  logger:info("Without context.")
+  logger.formatting:set_display_context(false)
+  logger:debug("Without context.")
+  logger:error("Without context.")
+  logger.ctx = "Context from line 100 !"
+  logger:info("Without context.")
 
 end
 

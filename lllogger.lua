@@ -1,5 +1,5 @@
 --[[
-VERSION = 14
+VERSION = 18
 llloger
 
 A simple logging module based on Python one. Originaly made for use with
@@ -32,6 +32,7 @@ local tostring = tostring
 local stringrep = string.rep
 local tonumber = tonumber
 local stringformat = string.format
+local select = select
 local print = print
 local type = type
 
@@ -66,12 +67,23 @@ local __loggers = {}
 
 -------------------------------------------------------------------------------
 -- functions/classes
-
+local conkat
 local table2string
 local stringify
 local round
 local StrFmtSettings = {}
 local Logger = {}
+
+conkat = function (...)
+  --[[
+  The loop-safe string concatenation method.
+  ]]
+  local buf = {}
+  for i=1, select("#",...) do
+    buf[ #buf + 1 ] = tostring(select(i,...))
+  end
+  return tableconcat(buf)
+end
 
 stringify = function(source, index, settings)
   --[[
@@ -98,10 +110,10 @@ stringify = function(source, index, settings)
     source = tostring(round(source, settings.numbers.round))
 
   elseif (type(source) == "string") and settings.strings.display_quotes == true then
-    local buf = {"\""}
-    buf[#buf + 1] = source
-    buf[#buf + 1] = "\""
-    source = tableconcat(buf)
+    source = conkat("\"", source, "\"")
+
+  elseif (type(source) == "string") then
+    -- do nothing
 
   else
     source = tostring(source)
@@ -213,11 +225,12 @@ round = function(num, numDecimalPlaces)
     numDecimalPlaces(number): number of decimal to keep
   Returns: number
   ]]
-  local buf = {}
-  buf[#buf + 1] = "%."
-  buf[#buf + 1] = (numDecimalPlaces or 0)
-  buf[#buf + 1] = "f"
-  return tonumber(stringformat(tableconcat(buf), num))
+  return tonumber(
+      stringformat(
+          conkat("%.", (numDecimalPlaces or 0), "f"),
+          num
+      )
+  )
 end
 
 function StrFmtSettings:new()
@@ -228,7 +241,7 @@ function StrFmtSettings:new()
 
   -- these are the default values
   local attrs = {
-    ["display_line"] = true,
+    ["display_context"] = true,
     ["blocks_duplicate"] = true,
     -- how much decimals should be kept for floating point numbers
     ["numbers"] = {
@@ -250,9 +263,9 @@ function StrFmtSettings:new()
     }
   }
 
-  function attrs:set_display_line(enable)
+  function attrs:set_display_context(enable)
     -- enable(bool): true to display line from where the logger was called
-    self.display_line = enable
+    self.display_context = enable
   end
 
   function attrs:set_blocks_duplicate(enable)
@@ -317,9 +330,10 @@ function Logger:new(name)
   local attrs = {
     name = name,
     formatting = StrFmtSettings:new(),
+    ctx = false,
     _level = LEVELS.debug,
     __last = false,
-    __lastnum = 0
+    __lastnum = 0,
 
   }
 
@@ -336,13 +350,13 @@ function Logger:new(name)
 
   end
 
-  function attrs:_log(level, messages, linectx)
+  function attrs:_log(level, messages, ctx)
     --[[
     Args:
       level(table): level object as defined in self.levels
       messages(table): list of object to display
-      linectx(str or nil): from where the log function is executed.
-        Here it's the line number of the logger call
+      ctx(str or nil): from where the log function is executed.
+        Only used for error level, else used
     ]]
 
     if level.weight < self._level.weight then
@@ -355,20 +369,24 @@ function Logger:new(name)
       messages = {messages}
     end
 
+    ctx = ctx or self.ctx
+
     outbuf[#outbuf + 1] = "[OpScript]["
     outbuf[#outbuf + 1] = level.name
     outbuf[#outbuf + 1] = "]["
     outbuf[#outbuf + 1] = self.name
     outbuf[#outbuf + 1] = "]"
-    if linectx and self.formatting.display_line == true then
-      outbuf[#outbuf + 1] = "[line"
-      outbuf[#outbuf + 1] = stringify(linectx)
+    if (ctx or self.ctx) and self.formatting.display_context == true then
+      outbuf[#outbuf + 1] = "["
+      outbuf[#outbuf + 1] = stringify(ctx, nil, self.formatting)
       outbuf[#outbuf + 1] = "] "
     end
     for _, mvalue in ipairs(messages) do
       outbuf[#outbuf + 1] = stringify(mvalue, nil, self.formatting)
       outbuf[#outbuf + 1] = " "
     end
+
+    self.ctx = false
 
     -- concatenate the buffer to string and print
     self:_print(tableconcat(outbuf))
@@ -383,7 +401,8 @@ function Logger:new(name)
 
     -- we dont need all the later stuff if settings disable it
     if self.formatting.blocks_duplicate == false then
-      return print(message)
+      print(message)
+      return
     end
 
     -- check if the new message is actually repeated
@@ -395,7 +414,9 @@ function Logger:new(name)
       -- if the previous message was repeated, tell it to the user
       if self.__lastnum > 0 then
         local buf = {}
-        buf[#buf + 1] = "    ... The last message was repeated <"
+        buf[#buf + 1] = "    ... ["
+        buf[#buf + 1] = self.name
+        buf[#buf + 1] = "] The last message was repeated <"
         buf[#buf + 1] = self.__lastnum
         buf[#buf + 1] = "> times..."
         print(tableconcat(buf))
@@ -423,7 +444,11 @@ function Logger:new(name)
   end
 
   function attrs:error(...)
-    self:_log(LEVELS.error, { ... })
+    self:_log(
+      LEVELS.error,
+      { ... },
+      conkat(debug.getinfo(2).name, ":line", debug.getinfo(2).currentline)
+    )
   end
 
   return attrs

@@ -126,7 +126,7 @@ logger.formatting:set_tbl_length_max(50)
 logger.formatting:set_tbl_indent(4)
 logger.formatting:set_tbl_display_functions(true)
 logger.formatting:set_blocks_duplicate(true)
-logger.formatting:set_display_line(true)
+logger.formatting:set_display_context(true)
 
 ```
 
@@ -134,6 +134,34 @@ Example with a table containing lot of data, table is displayed as multiples
 lines except for the tables with a lot of values.
 
 ![fomatting demo](img/fmt-demo.png)
+
+### context
+
+Sometimes you might need a bit of "execution" context to debug more easily.
+Like for error messages. That's where the `logger.formatting:set_display_context(true)`
+come in play. If set to false of course all the under doesn't apply.
+
+By default, only error message will prefix the message with some context to 
+help debugging. It's a string made of the name of the function + the line
+at which the logger was called at. But you could swap this context with anything you
+want and also display one for other log levels :
+
+```lua
+logger:set_level("debug")
+
+logger:info("Without context.")
+logger:error("With context.")
+logger.ctx = "Called from line 5 !"
+logger:info("With context.")
+logger:info("Without context.")  -- ctx was automatically reset
+
+logger.formatting:set_display_context(false)
+logger:debug("Without context.")
+logger:error("Without context.")
+logger.ctx = "Context from line12 !"
+logger:info("Without context.")
+```
+
 
 # Misc
 
