@@ -174,6 +174,15 @@ To avoid this you can abuse of `logger:debug` during development and then switch
 the logger's level to `info` at publish time and make
 sure there is only a few `logger:info` calls.
 
+# Project
+
+> https://github.com/MrLixm/llloger/projects/1
+
+Feel free to open issues for bugs/feature request or anything else.
+
+You can check the project board above for current development status.
+
+
 ---
 
 [![root](https://img.shields.io/badge/back_to_root-536362?)](../README.md)
