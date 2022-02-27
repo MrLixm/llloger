@@ -5,7 +5,7 @@ Primitive tests. No assert cause lazy.
 ]]
 
 local logging = require("lllogger")
-local logger = logging:new("LllogerTest")
+local logger = logging:get_logger("LllogerTest")
 
 
 local function _runctx(test_msg)
@@ -88,15 +88,47 @@ runs[#runs + 1] = function ()
 
   logger:set_level("debug")
 
-  logger:debug("With line.")
-  logger:info("With line.")
-  logger:error("With line.")
-  logger.formatting:set_display_line(false)
-  logger:debug("Without line.")
-  logger:info("Without line.")
-  logger:error("Without line.")
+  logger:debug("Without context.")
+  logger:info("Without context.")
+  logger:error("With context.")
+  logger.ctx = "Context from line 94 !"
+  logger:info("With context.")
+  logger:info("Without context.")
+  logger.formatting:set_display_context(false)
+  logger:debug("Without context.")
+  logger:error("Without context.")
+  logger.ctx = "Context from line 100 !"
+  logger:info("Without context.")
 
 end
+
+runs[#runs + 1] = function ()
+  _runctx("logging display levels available")
+
+  logger:info(logging:list_levels())
+
+end
+
+
+runs[#runs + 1] = function ()
+  _runctx("display time tests")
+
+  logger:set_level("debug")
+
+  logger.formatting:set_display_time(true)
+  logger:info("With time.")
+
+  logger.formatting:set_display_time(false)
+  logger:debug("Without time.")
+  logger:info("Without time.")
+  logger:error("Without time.")
+
+  logger.formatting:set_display_time(true)
+  logger:debug("With time.")
+
+end
+
+
 
 print("\n\n")
 print(string.rep("_", 125))

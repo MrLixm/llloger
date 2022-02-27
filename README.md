@@ -11,6 +11,10 @@ Originaly intended to be use with Foundry's Katana software, OpScript feature.
 
 # Features
 
+```
+17:23:47 [OpScript][  DEBUG][LllogerTest] This is a debug message !   
+```
+
 - "level" system where you can define what level of message is allowed to be displayed.
 - Multiples logger with different log level can be created in the same script.
 - Convert tables and nested tables to a human-readable string (see settings).
@@ -25,6 +29,7 @@ Originaly intended to be use with Foundry's Katana software, OpScript feature.
   - tables : maximum table length allowed before the table is forced to one-line
 - Options for avoiding message flooding where the same message is repeated a lot of time
 
+Check [the project](https://github.com/MrLixm/llloger/projects/1) for what's next.
 
 # Documentation
 
