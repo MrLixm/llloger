@@ -6,10 +6,10 @@
 
 Section related to code development.
 
-Code mostly try to follow Python standards (PEP).
+Code mostly try to follow Python standards (PEP) for syntax.
 Indent used are `2` white-space
 
-Code tests were made on Katana 4.5v1.
+Code tests were made on Katana 4.5v1 which is using `Lua 5.1.5`
 
 
 # Using outside of Katana

@@ -1,5 +1,5 @@
 --[[
-VERSION = 13
+VERSION = 14
 llloger
 
 A simple logging module based on Python one. Originaly made for use with
@@ -7,7 +7,7 @@ Foundry's Katana software, OpScript feature.
 This is a module version.
 
 Author: Liam Collod
-Last-Modified: 26/02/2022
+Last-Modified: 27/02/2022
 
 [LICENSE]
 Copyright 2022 Liam Collod

@@ -5,7 +5,7 @@ Primitive tests. No assert cause lazy.
 ]]
 
 local logging = require("lllogger")
-local logger = logging:new("LllogerTest")
+local logger = logging:get_logger("LllogerTest")
 
 
 local function _runctx(test_msg)
@@ -97,6 +97,14 @@ runs[#runs + 1] = function ()
   logger:error("Without line.")
 
 end
+
+runs[#runs + 1] = function ()
+  _runctx("logging display levels available")
+
+  logger:info(logging:list_levels())
+
+end
+
 
 print("\n\n")
 print(string.rep("_", 125))
