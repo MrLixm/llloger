@@ -110,6 +110,11 @@ or use the pre-build methods.
 
 See the default value to see what type is expecte for the argument.
 
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) StrFmtSettings.display_time 
+> `default=true`
+> 
+> True to display the current time at beginning of the message. Formatted as hour:min:seconds.
+
 ## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) StrFmtSettings.display_context 
 > `default=true`
 > 
@@ -159,6 +164,7 @@ See the default value to see what type is expecte for the argument.
 > If true, every string is wrap with the `""` around. 
 
 
+## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_display_time
 ## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_display_context
 ## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_blocks_duplicate
 ## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_num_round

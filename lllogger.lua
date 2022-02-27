@@ -1,5 +1,5 @@
 --[[
-VERSION = 18
+VERSION = 19
 llloger
 
 A simple logging module based on Python one. Originaly made for use with
@@ -60,6 +60,8 @@ local LEVELS = {
         weight = 40,
       }
 }
+
+local TIMEFORMAT = "%02d:%02d:%02d"
 
 -- list of instances of all loggers ever created
 -- numerical table
@@ -241,6 +243,7 @@ function StrFmtSettings:new()
 
   -- these are the default values
   local attrs = {
+    ["display_time"] = true,
     ["display_context"] = true,
     ["blocks_duplicate"] = true,
     -- how much decimals should be kept for floating point numbers
@@ -263,8 +266,13 @@ function StrFmtSettings:new()
     }
   }
 
+  function attrs:set_display_time(enable)
+    -- enable(bool): true to display the current time as h:m:s
+    self.display_time = enable
+  end
+
   function attrs:set_display_context(enable)
-    -- enable(bool): true to display line from where the logger was called
+    -- enable(bool): true to display Logger.ctx
     self.display_context = enable
   end
 
@@ -370,6 +378,12 @@ function Logger:new(name)
     end
 
     ctx = ctx or self.ctx
+
+    if self.formatting.display_time then
+      local time = os.date("*t")  -- https://stackoverflow.com/q/12466950/13806195
+      outbuf[#outbuf + 1] = (TIMEFORMAT):format(time.hour, time.min, time.sec)
+      outbuf[#outbuf + 1] = " "
+    end
 
     outbuf[#outbuf + 1] = "[OpScript]["
     outbuf[#outbuf + 1] = level.name

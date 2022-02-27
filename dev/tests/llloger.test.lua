@@ -110,6 +110,26 @@ runs[#runs + 1] = function ()
 end
 
 
+runs[#runs + 1] = function ()
+  _runctx("display time tests")
+
+  logger:set_level("debug")
+
+  logger.formatting:set_display_time(true)
+  logger:info("With time.")
+
+  logger.formatting:set_display_time(false)
+  logger:debug("Without time.")
+  logger:info("Without time.")
+  logger:error("Without time.")
+
+  logger.formatting:set_display_time(true)
+  logger:debug("With time.")
+
+end
+
+
+
 print("\n\n")
 print(string.rep("_", 125))
 print("[llloger.test] Starting ...")
