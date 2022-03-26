@@ -1,6 +1,6 @@
 # ![kui logo](./img/logo.svg) Index
 
-Welcome on the llloger module's documentation.
+Welcome on the lllogger module's documentation.
 
 [![root](https://img.shields.io/badge/back_to_root-536362?)](../README.md)
 [![next](https://img.shields.io/badge/▶_next_page-api-4f4f4f?labelColor=fcb434)](API.md)

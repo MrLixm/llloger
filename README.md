@@ -1,4 +1,4 @@
-# llloger
+# lllogger
 
 ![lua](https://img.shields.io/badge/Lua-any-4f4f4f?labelColor=000090&logo=lua&logoColor=white)
 ![katana version](https://img.shields.io/badge/Katana-any-4f4f4f?labelColor=FCB123&logo=katana&logoColor=black)
@@ -9,10 +9,13 @@ Originaly intended to be use with Foundry's Katana software, OpScript feature.
 
 ![cover](./doc/img/cover.png)
 
+> I must mention the BIG typo in the repo's name where I forgot a `g`. So it's
+> actually called `lllogger` not `llloger`.
+
 # Features
 
 ```
-17:23:47 [OpScript][  DEBUG][LllogerTest] This is a debug message !   
+17:23:47 [OpScript][  DEBUG][LlloggerTest] This is a debug message !   
 ```
 
 - "level" system where you can define what level of message is allowed to be displayed.

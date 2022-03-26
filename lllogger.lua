@@ -1,6 +1,6 @@
 --[[
 VERSION = 19
-llloger
+lllogger
 
 A simple logging module based on Python one. Originaly made for use with
 Foundry's Katana software, OpScript feature.

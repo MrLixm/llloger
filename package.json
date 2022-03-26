@@ -1,0 +1,12 @@
+{
+  "name": "lllogger",
+  "version": "1.0.0",
+  "author": "Liam Collod",
+  "license": "Apache 2.0",
+  "description": "A simple lua logging module inspired from Python's one.",
+  "keywords": ["vfx", "katana", "opscript", "lua", "logging", "debug"],
+  "dependencies": {},
+  "engines": {
+    "lua": "~5.1.5"
+  }
+}
