@@ -1,15 +1,14 @@
 --[[
-VERSION = 20
-lllogger
-
+version = 20
+name = "lllogger"
+author = "Liam Collod"
+last_modified = "27/02/2022"
+summary = """
 A simple logging module based on Python one. Originaly made for use with
 Foundry's Katana software, OpScript feature.
 This is a module version.
-
-Author: Liam Collod
-Last-Modified: 27/02/2022
-
-[LICENSE]
+"""
+license = """
 Copyright 2022 Liam Collod
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +22,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
+"""
 ]]
 
 -- make some global lua fonction local to improve perfs
