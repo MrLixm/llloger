@@ -9,6 +9,7 @@ Originaly intended to be use with Foundry's Katana software, OpScript feature.
 
 ![cover](./doc/img/cover.png)
 
+> **Warning**
 > I must mention the BIG typo in the repo's name where I forgot a `g`. So it's
 > actually called `lllogger` not `llloger`.
 
