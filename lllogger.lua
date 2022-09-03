@@ -1,5 +1,5 @@
 --[[
-VERSION = 19
+VERSION = 20
 lllogger
 
 A simple logging module based on Python one. Originaly made for use with
@@ -379,6 +379,8 @@ function Logger:new(name)
 
     ctx = ctx or self.ctx
 
+    outbuf[#outbuf + 1] = string.format("[%-7s] ", level.name)
+
     if self.formatting.display_time then
       local time = os.date("*t")  -- https://stackoverflow.com/q/12466950/13806195
       outbuf[#outbuf + 1] = (TIMEFORMAT):format(time.hour, time.min, time.sec)
@@ -386,8 +388,6 @@ function Logger:new(name)
     end
 
     outbuf[#outbuf + 1] = "[OpScript]["
-    outbuf[#outbuf + 1] = level.name
-    outbuf[#outbuf + 1] = "]["
     outbuf[#outbuf + 1] = self.name
     outbuf[#outbuf + 1] = "]"
     if (ctx or self.ctx) and self.formatting.display_context == true then
