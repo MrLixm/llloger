@@ -1,28 +1,21 @@
---[[
-version = 20
-name = "lllogger"
-author = "Liam Collod"
-last_modified = "27/02/2022"
-summary = """
-A simple logging module based on Python one. Originaly made for use with
-Foundry's Katana software, OpScript feature.
-This is a module version.
-"""
-license = """
-Copyright 2022 Liam Collod
+local _M_ = {}
+_M_._VERSION = "2.0.0-1"
+_M_._AUTHOR = "<Liam Collod monsieurlixm@gmail.com>"
+_M_._DESCRIPTION = "A simple logging module based on Python one."
+_M_._LICENSE = [[
+  Copyright 2022 Liam Collod
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
 
-   http://www.apache.org/licenses/LICENSE-2.0
+     http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
 ]]
 
 -- make some global lua fonction local to improve perfs
@@ -43,11 +36,11 @@ local LEVELS = {
       Log levels available.
       ]]
       debug = {
-        name = "  DEBUG",  -- name displayed in the console
+        name = "DEBUG",  -- name displayed in the console
         weight = 10
       },
       info = {
-        name = "   INFO",
+        name = "INFO",
         weight = 20
       },
       warning = {
@@ -55,16 +48,19 @@ local LEVELS = {
         weight = 30
       },
       error = {
-        name = "  ERROR",
+        name = "ERROR",
         weight = 40,
       }
 }
 
-local TIMEFORMAT = "%02d:%02d:%02d"
-
 -- list of instances of all loggers ever created
 -- numerical table
 local __loggers = {}
+
+local APPCONTEXT = os.getenv("LLLOGGER_CONTEXT")
+if not APPCONTEXT then
+  APPCONTEXT = "lua"
+end
 
 -------------------------------------------------------------------------------
 -- functions/classes
@@ -72,7 +68,8 @@ local conkat
 local table2string
 local stringify
 local round
-local StrFmtSettings = {}
+local tokenReplace
+local Formatter = {}
 local Logger = {}
 
 conkat = function (...)
@@ -96,7 +93,7 @@ stringify = function(source, index, settings)
     settings(StrFmtSettings or nil): configure how source is formatted
   ]]
   if not settings then
-    settings = StrFmtSettings:new()
+    settings = Formatter:new()
   end
 
   if not index then
@@ -159,7 +156,7 @@ table2string = function(tablevalue, index, settings)
   if settings and settings.tables then
     tsettings = settings.tables
   else
-    tsettings = StrFmtSettings:new().tables
+    tsettings = Formatter:new().tables
   end
 
   local linebreak_start = "\n"
@@ -234,17 +231,46 @@ round = function(num, numDecimalPlaces)
   )
 end
 
-function StrFmtSettings:new()
+tokenReplace = function(token, source, value)
   --[[
-  A base class that hold configuration settings for string formatting used
-  by stringify() and table2string()
+  Replace the given <token> existing or not in the <source> with the given <value>.
+
+  token are expressed as "{token}" in <source> but also as "{token:args}" where
+  "args" are passed to string.format (https://en.cppreference.com/w/c/io/fprintf#Parameters)
+
+  Args:
+    token(string): token to find in source
+    source(string): template string where we can find the token
+    value(string): any string to replace the token with
+
+  Returns:
+    string:
+      source argument with the given <token> replace by <value> if <token> found.
+  ]]
+  local format_arg = source:match(("{%s:([^}]+)}"):format(token))
+  local replace_with = "%s"
+  if format_arg then
+    replace_with = ("%%%ss"):format(format_arg)
+  end
+  replace_with = replace_with:format(value)
+  local replaced = source:gsub(("{%s[^}]*}"):format(token), replace_with)
+  return replaced
+end
+
+
+function Formatter:new(template)
+  --[[
+  The logger message formatter. Configure how message are displayed.
   ]]
 
   -- these are the default values
   local attrs = {
-    ["display_time"] = true,
     ["display_context"] = true,
     ["blocks_duplicate"] = true,
+
+    -- see https://www.lua.org/pil/22.1.html for available tokens
+    ["time_format"] = "%c",  -- %c = "09/16/98 23:48:10"
+
     -- how much decimals should be kept for floating point numbers
     ["numbers"] = {
       ["round"] = 3
@@ -265,13 +291,32 @@ function StrFmtSettings:new()
     }
   }
 
-  function attrs:set_display_time(enable)
-    -- enable(bool): true to display the current time as h:m:s
-    self.display_time = enable
+  if template then
+    attrs["template"] = template
+  else
+    -- check https://en.cppreference.com/w/c/io/fprintf#Parameters for what
+    -- string formatting arg are available (defined after the ":")
+    attrs["template"] = "[{level:-7}] {time} [{appctx}][{logger}]{message}"
+  end
+
+  function attrs:format(message, level, logger)
+    local out = self.template
+    local time = os.date(self.time_format)
+    out = tokenReplace("time", out, time)
+    out = tokenReplace("message", out, message)
+    out = tokenReplace("logger", out, logger)
+    out = tokenReplace("level", out, level)
+    out = tokenReplace("appctx", out, APPCONTEXT)
+    return out
+  end
+
+  function attrs:set_template(tmpl)
+    -- tmpl(string): template for displaying message, with tokens.
+    self.template = tmpl
   end
 
   function attrs:set_display_context(enable)
-    -- enable(bool): true to display Logger.ctx
+    -- enable(bool): true to display Logger.ctx when specified
     self.display_context = enable
   end
 
@@ -319,6 +364,7 @@ function StrFmtSettings:new()
 
 end
 
+
 function Logger:new(name)
   --[[
   Display logging messages using an instance of this class.
@@ -336,16 +382,15 @@ function Logger:new(name)
 
   local attrs = {
     name = name,
-    formatting = StrFmtSettings:new(),
-    ctx = false,
+    formatter = Formatter:new(),
     _level = LEVELS.debug,
     __last = false,
     __lastnum = 0,
 
   }
 
-  function attrs:set_level(level)
-    -- level(string or nil): see self.levels keys for value
+  function attrs:setLevel(level)
+    -- level(string or nil): see LEVELS keys for values available
 
     if level == nil then
       return
@@ -353,6 +398,8 @@ function Logger:new(name)
 
     if LEVELS[level] ~= nil then
       self._level = LEVELS[level]
+    else
+      error("Cannot set current Logger <"..self.name.."> to level "..tostring(level))
     end
 
   end
@@ -360,8 +407,8 @@ function Logger:new(name)
   function attrs:_log(level, messages, ctx)
     --[[
     Args:
-      level(table): level object as defined in self.levels
-      messages(table): list of object to display
+      level(table): level object as defined in LEVELS
+      messages(table): list of object to display as message or a single object
       ctx(str or nil): from where the log function is executed.
         Only used for error level, else used
     ]]
@@ -369,40 +416,21 @@ function Logger:new(name)
     if level.weight < self._level.weight then
       return
     end
-    -- avoid string conact in loops using a table buffer
-    local outbuf = {}
+    -- avoid string concat in loops using a table buffer
+    local messagebuf = {}
     -- make sure messages is always a table to iterate later
     if (type(messages)~="table") then
       messages = {messages}
     end
 
-    ctx = ctx or self.ctx
-
-    outbuf[#outbuf + 1] = string.format("[%-7s] ", level.name)
-
-    if self.formatting.display_time then
-      local time = os.date("*t")  -- https://stackoverflow.com/q/12466950/13806195
-      outbuf[#outbuf + 1] = (TIMEFORMAT):format(time.hour, time.min, time.sec)
-      outbuf[#outbuf + 1] = " "
-    end
-
-    outbuf[#outbuf + 1] = "[OpScript]["
-    outbuf[#outbuf + 1] = self.name
-    outbuf[#outbuf + 1] = "]"
-    if (ctx or self.ctx) and self.formatting.display_context == true then
-      outbuf[#outbuf + 1] = "["
-      outbuf[#outbuf + 1] = stringify(ctx, nil, self.formatting)
-      outbuf[#outbuf + 1] = "] "
-    end
     for _, mvalue in ipairs(messages) do
-      outbuf[#outbuf + 1] = stringify(mvalue, nil, self.formatting)
-      outbuf[#outbuf + 1] = " "
+      messagebuf[#messagebuf + 1] = stringify(mvalue, nil, self.formatter)
     end
+    messagebuf = tableconcat(messagebuf)
 
-    self.ctx = false
+    messagebuf = self.formatter:format(messagebuf, self._level.name, self.name)
 
-    -- concatenate the buffer to string and print
-    self:_print(tableconcat(outbuf))
+    self:_print(messagebuf)
 
   end
 
@@ -413,7 +441,7 @@ function Logger:new(name)
     ]]
 
     -- we dont need all the later stuff if settings disable it
-    if self.formatting.blocks_duplicate == false then
+    if self.formatter.blocks_duplicate == false then
       print(message)
       return
     end
@@ -457,11 +485,7 @@ function Logger:new(name)
   end
 
   function attrs:error(...)
-    self:_log(
-      LEVELS.error,
-      { ... },
-      conkat(debug.getinfo(2).name, ":line", debug.getinfo(2).currentline)
-    )
+    self:_log(LEVELS.error,{ ... })
   end
 
   return attrs
@@ -472,24 +496,10 @@ end
 -- PUBLIC FUNCTIONS
 
 
-local function get_levels(self)
-  --[[
-  Returns:
-      table[num=str]:
-          {"debug level name", ...}
-  ]]
-  local levels_name = {}
-  for k, _ in pairs(LEVELS) do
-    table.insert(levels_name, k)
-  end
-  return levels_name
-end
-
-
-local function get_logger(self, name)
+function _M_.getLogger(name)
   --[[
   Return the logger for the given name.
-  Create a new instance if not already existing else return the existing instance.
+  If no instance is existing, create a new one.
 
   Returns:
     Logger:
@@ -513,7 +523,12 @@ local function get_logger(self, name)
 
 end
 
-return {
-  get_logger = get_logger,
-  list_levels = get_levels
-}
+_M_.__loggers = __loggers
+_M_.LEVELS = LEVELS
+_M_.DEBUG = LEVELS.debug
+_M_.INFO = LEVELS.info
+_M_.WARNING = LEVELS.warning
+_M_.ERROR = LEVELS.error
+_M_.Logger = Logger
+
+return _M_

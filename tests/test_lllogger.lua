@@ -5,7 +5,7 @@ Primitive tests. No assert cause lazy.
 ]]
 
 local logging = require("lllogger")
-local logger = logging:get_logger("LllogerTest")
+local logger = logging.getLogger("LllogerTest")
 
 
 local function _runctx(test_msg)
@@ -27,7 +27,7 @@ runs[#runs + 1] = function ()
   -- should print
   logger:debug("this is a debug message")
 
-  logger:set_level("error")
+  logger:setLevel("error")
 
   logger:info("!! this should not be printed")
   logger:error("this should be printed")
@@ -36,14 +36,14 @@ end
 
 runs[#runs + 1] = function ()
   _runctx("log level change after a first change")
-  logger:set_level("debug")
+  logger:setLevel("debug")
   logger:debug("this is a debug message, should be printed.")
 
 end
 
 runs[#runs + 1] = function ()
   _runctx("log with multiple argument types")
-  logger:set_level("debug")
+  logger:setLevel("debug")
   local t = {"2", "4", "8"}
   logger:debug("Debug:", 100, ", t=", t)
 
@@ -51,8 +51,8 @@ end
 
 runs[#runs + 1] = function ()
   _runctx("log with duplicate blocking")
-  logger:set_level("debug")
-  logger.formatting:set_blocks_duplicate(true)
+  logger:setLevel("debug")
+  logger.formatter:set_blocks_duplicate(true)
 
   logger:info("Hello from run04 ! You should now see multiple message :")
   for i=1, 15 do
@@ -69,8 +69,8 @@ end
 
 runs[#runs + 1] = function ()
   _runctx("log with duplicate blocking special case 01")
-  logger:set_level("debug")
-  logger.formatting:set_blocks_duplicate(true)
+  logger:setLevel("debug")
+  logger.formatter:set_blocks_duplicate(true)
 
   logger:info("Hello from run05 !")
   for i=1, 15 do
@@ -83,56 +83,20 @@ runs[#runs + 1] = function ()
 
 end
 
-runs[#runs + 1] = function ()
-  _runctx("log formatting : no line")
-
-  logger:set_level("debug")
-
-  logger:debug("Without context.")
-  logger:info("Without context.")
-  logger:error("With context.")
-  logger.ctx = "Context from line 94 !"
-  logger:info("With context.")
-  logger:info("Without context.")
-  logger.formatting:set_display_context(false)
-  logger:debug("Without context.")
-  logger:error("Without context.")
-  logger.ctx = "Context from line 100 !"
-  logger:info("Without context.")
-
-end
-
-runs[#runs + 1] = function ()
-  _runctx("logging display levels available")
-
-  logger:info(logging:list_levels())
-
-end
-
-
-runs[#runs + 1] = function ()
-  _runctx("display time tests")
-
-  logger:set_level("debug")
-
-  logger.formatting:set_display_time(true)
-  logger:info("With time.")
-
-  logger.formatting:set_display_time(false)
-  logger:debug("Without time.")
-  logger:info("Without time.")
-  logger:error("Without time.")
-
-  logger.formatting:set_display_time(true)
-  logger:debug("With time.")
-
-end
-
-
-
 print("\n\n")
-print(string.rep("_", 125))
-print("[llloger.test] Starting ...")
+print(string.rep("=", 125))
+print(string.rep("=", 125))
+print(("[llloger.test] %s Starting ..."):format(os.date()))
+print(string.rep("=", 125))
+for _, func in ipairs(runs) do
+  func()
+end
+
+
+logger.formatter.template = "{time} [{level:9}] {{appctx}}({logger}){message}"
+logger.formatter.time_format = "%H:%M:%S"
+print(string.rep("=", 125))
+_runctx("Now running the same tests but with the logger formating changed")
 for _, func in ipairs(runs) do
   func()
 end
