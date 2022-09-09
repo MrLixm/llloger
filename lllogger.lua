@@ -271,21 +271,39 @@ function Formatter:new(template)
     ["display_context"] = true,
     ["blocks_duplicate"] = true,
 
-    -- see https://www.lua.org/pil/22.1.html for available tokens
-    ["time_format"] = "%c",  -- %c = "09/16/98 23:48:10"
+    ["time_format"] = "%c",  -- %c ~= "09/16/98 23:48:10"
+    --[[
+    see https://www.lua.org/pil/22.1.html for available tokens
+    ]]
 
-    -- how much decimals should be kept for floating point numbers
+    ["template"] = "[{level:-7}] {time} [{appctx}][{logger}]{message}",
+    --[[
+    tokens available are :
+    [time, message, logger, level, appctx]
+
+    check https://en.cppreference.com/w/c/io/fprintf#Parameters for what
+    string formatting arg are available (defined after the ":")
+    ]]
+    ["template_duplicate"] = "    [{logger}] The last message was repeated <{nrepeat}> times ...",
+    --[[
+    tokens available are :
+    [time ,logger, appctx ,nrepeat]
+
+    check https://en.cppreference.com/w/c/io/fprintf#Parameters for what
+    string formatting arg are available (defined after the ":")
+    ]]
+
     ["numbers"] = {
       ["round"] = 3
+      -- how much decimals should be kept for floating point numbers
     },
-    -- nil by default cause the table2string already have some defaults
     ["tables"] = {
-      -- how much whitespaces is considered an indent
       ["indent"] = 4,
-      -- max table size before displaying it as oneline to avoid flooding
+      -- how much whitespaces is considered an indent
       ["length_max"] = 50,
-      -- true to display the table on multiples lines with indents
+      -- max table size before displaying it as oneline to avoid flooding
       ["linebreaks"] = true,
+      -- true to display the table on multiples lines with indents
       ["display_indexes"] = false,
       ["display_functions"] = true
     },
@@ -296,13 +314,16 @@ function Formatter:new(template)
 
   if template then
     attrs["template"] = template
-  else
-    -- check https://en.cppreference.com/w/c/io/fprintf#Parameters for what
-    -- string formatting arg are available (defined after the ":")
-    attrs["template"] = "[{level:-7}] {time} [{appctx}][{logger}]{message}"
   end
 
   function attrs:format(message, level, logger)
+    --[[
+    Return the string to log for the given parameters.
+    They will be applied on the template.
+
+    Returns:
+      string:
+    ]]
     local out = self.template
     local time = os.date(self.time_format)
     out = tokenReplace("time", out, time)
@@ -310,6 +331,23 @@ function Formatter:new(template)
     out = tokenReplace("logger", out, logger)
     out = tokenReplace("level", out, level)
     out = tokenReplace("appctx", out, APPCONTEXT)
+    return out
+  end
+
+  function attrs:formatDuplicate(logger, repeated)
+    --[[
+    Return the string to log to inform that the previous message has been
+    repeated <repeated> number of times.
+
+    Returns:
+      string:
+    ]]
+    local out = self.template_duplicate
+    local time = os.date(self.time_format)
+    out = tokenReplace("time", out, time)
+    out = tokenReplace("logger", out, logger)
+    out = tokenReplace("appctx", out, APPCONTEXT)
+    out = tokenReplace("nrepeat", out, repeated)
     return out
   end
 
@@ -407,6 +445,16 @@ function Logger:new(name)
 
   end
 
+  function attrs:setFormatter(formatter)
+    -- formatter(Formatter): instance of the Formatter class to use
+
+    if formatter == nil then
+      return
+    end
+    self.formatter = formatter
+
+  end
+
   function attrs:_log(level, messages, ctx)
     --[[
     Args:
@@ -457,13 +505,7 @@ function Logger:new(name)
     else
       -- if the previous message was repeated, tell it to the user
       if self.__lastnum > 0 then
-        local buf = {}
-        buf[#buf + 1] = "    ... ["
-        buf[#buf + 1] = self.name
-        buf[#buf + 1] = "] The last message was repeated <"
-        buf[#buf + 1] = self.__lastnum
-        buf[#buf + 1] = "> times..."
-        print(tableconcat(buf))
+        print(self.formatter:formatDuplicate(self.name, self.__lastnum))
       end
       -- and then reset to the new message
       self.__last = message
