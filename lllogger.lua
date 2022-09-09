@@ -172,8 +172,9 @@ table2string = function(tablevalue, depth, settings)
   )
 
   -- if the table is too long make it one line with no line break
-  if #tablevalue > tsettings.length_max then
+  if #tablevalue > tsettings.linebreak_treshold then
     linebreak = ""
+    linebreak_start = ""
     inline_indent = ""
     inline_indent_end = ""
   end
@@ -190,7 +191,16 @@ table2string = function(tablevalue, depth, settings)
   outtable[#outtable + 1] = "{"
   outtable[#outtable + 1] = linebreak_start
 
+  local table_index = 1
   for k, v in pairs(tablevalue) do
+
+    if tsettings.max_length > 0 and table_index >= tsettings.max_length then
+      outtable[#outtable + 1] = inline_indent
+      outtable[#outtable + 1] = ("[...]")
+      outtable[#outtable + 1] = linebreak
+      break
+    end
+
     -- if table is build with number as keys, just display the value
     if (type(k) == "number") and tsettings.display_indexes == false then
       outtable[#outtable + 1] = inline_indent
@@ -209,8 +219,8 @@ table2string = function(tablevalue, depth, settings)
         outtable[#outtable + 1] = ","
         outtable[#outtable + 1] = linebreak
       end
-
     end
+    table_index = table_index + 1
   end
   outtable[#outtable + 1] = inline_indent_end
   outtable[#outtable + 1] = "}"
@@ -300,7 +310,9 @@ function Formatter:new(template)
     ["tables"] = {
       ["indent"] = 4,
       -- how much whitespaces is considered an indent
-      ["length_max"] = 50,
+      ["max_length"] = 0,
+      -- maximum number of table element that can be displayed before being "cut"
+      ["linebreak_treshold"] = 50,
       -- max table size before displaying it as oneline to avoid flooding
       ["linebreaks"] = true,
       -- true to display the table on multiples lines with indents
@@ -386,9 +398,14 @@ function Formatter:new(template)
     self.tables.linebreaks = display_value
   end
 
-  function attrs:set_tbl_length_max(length_max)
-    -- length_max(int):
-    self.tables.length_max = length_max
+  function attrs:set_tbl_max_length(length)
+    -- length(int):
+    self.tables.max_length = length
+  end
+
+  function attrs:set_tbl_linebreak_treshold(linebreak_treshold)
+    -- linebreak_treshold(int):
+    self.tables.linebreak_treshold = linebreak_treshold
   end
 
   function attrs:set_tbl_indent(indent)
@@ -455,7 +472,7 @@ function Logger:new(name)
 
   end
 
-  function attrs:_log(level, messages, ctx)
+  function attrs:_log(level, messages)
     --[[
     Args:
       level(table): level object as defined in LEVELS
