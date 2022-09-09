@@ -541,10 +541,15 @@ end
 -- PUBLIC FUNCTIONS
 
 
-function _M_.getLogger(name)
+function _M_.getLogger(name, force_new)
   --[[
   Return the logger for the given name.
   If no instance is existing, create a new one.
+
+  Args:
+    name(string): name of the logger to create/retrieve
+    force_new(boolean):
+      if True, force the creation of a new instance even if its already exists
 
   Returns:
     Logger:
@@ -552,16 +557,21 @@ function _M_.getLogger(name)
   ]]
 
   local logger_instance
+  local logger_index
 
-  for _, lllogger in ipairs(__loggers) do
+  for index, lllogger in ipairs(__loggers) do
     if lllogger.name == name then
       logger_instance = lllogger
+      logger_index = index
     end
   end
 
   if not logger_instance then
     logger_instance = Logger:new(name)
     table.insert(__loggers, logger_instance)
+  elseif force_new then
+    logger_instance = Logger:new(name)
+    __loggers[logger_index] = logger_instance
   end
 
   return logger_instance
