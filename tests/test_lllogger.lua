@@ -5,7 +5,8 @@ Primitive tests. No assert cause lazy.
 ]]
 
 local logging = require("lllogger")
-local logger = logging.getLogger("LllogerTest")
+local LNAME = "lllogerTest"
+local logger = logging.getLogger(LNAME)
 
 
 local function _runctx(test_msg)
@@ -24,6 +25,7 @@ local runs = {}
 
 runs[#runs + 1] = function ()
   _runctx("log level change")
+
   -- should print
   logger:debug("this is a debug message")
 
@@ -73,15 +75,50 @@ runs[#runs + 1] = function ()
   logger.formatter:set_blocks_duplicate(true)
 
   logger:info("Hello from run05 !")
-  for i=1, 15 do
+  for i=1, 7 do
     logger:info("Hello from run05's loop")
     if i==5 then
       logger:error("Error *simulation* at index 5")
     end
   end
-  logger:info("Goodbye from run05 !")
-
+  logger:info("Goodbye from run05 ! You should see 7 message repeated above.")
 end
+
+runs[#runs + 1] = function ()
+  _runctx("changing global formatting")
+  logger:setLevel("debug")
+  logger.formatter:set_blocks_duplicate(true)
+  logger.formatter.template = "{time} [{level:9}] {{appctx}}({logger}){message}"
+  logger.formatter.time_format = "%H:%M:%S"
+
+  logger:info("Hello from run06 !")
+  for i=1, 15 do
+    logger:info("Hello from run06's loop")
+    if i==5 then
+      logger:error("Error *simulation* at index 5")
+    end
+  end
+  logger:info("Goodbye from run06 !")
+end
+
+
+runs[#runs + 1] = function ()
+  _runctx("changing duplicate template")
+  logger:setLevel("debug")
+  logger.formatter:set_blocks_duplicate(true)
+  logger.formatter.template_duplicate = "  {time} repeated {nrepeat} times"
+  logger.formatter.time_format = "%H:%M:%S"
+
+  logger:info("Hello from run06 !")
+  for i=1, 15 do
+    logger:info("Hello from run06's loop")
+    if i==5 then
+      logger:error("Error *simulation* at index 5")
+    end
+  end
+  logger:info("Goodbye from run06 !")
+end
+
 
 print("\n\n")
 print(string.rep("=", 125))
@@ -89,14 +126,6 @@ print(string.rep("=", 125))
 print(("[llloger.test] %s Starting ..."):format(os.date()))
 print(string.rep("=", 125))
 for _, func in ipairs(runs) do
-  func()
-end
-
-
-logger.formatter.template = "{time} [{level:9}] {{appctx}}({logger}){message}"
-logger.formatter.time_format = "%H:%M:%S"
-print(string.rep("=", 125))
-_runctx("Now running the same tests but with the logger formating changed")
-for _, func in ipairs(runs) do
+  logger = logging.getLogger(LNAME, true)
   func()
 end
