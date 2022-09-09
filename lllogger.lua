@@ -58,6 +58,10 @@ local LEVELS = {
 local __loggers = {}
 
 local APPCONTEXT = os.getenv("LLLOGGER_CONTEXT")
+--[[
+This is available as a token in the Formatter template and allow to distinguinsh
+llloger message from other loggers from potential other languages.
+]]
 if not APPCONTEXT then
   APPCONTEXT = "lua"
 end
@@ -83,31 +87,31 @@ conkat = function (...)
   return tableconcat(buf)
 end
 
-stringify = function(source, index, settings)
+stringify = function(source, depth, formatter)
   --[[
   Convert the source to a readable string , based on it's type.
 
   Args:
     source(any): any type
-    index(int): recursive level of stringify
-    settings(StrFmtSettings or nil): configure how source is formatted
+    depth(int): recursive level of stringify
+    settings(Formatter or nil): configure how source is formatted
   ]]
-  if not settings then
-    settings = Formatter:new()
+  if not formatter then
+    formatter = Formatter:new()
   end
 
-  if not index then
-    index = 0
+  if not depth then
+    depth = 0
   end
 
 
   if (type(source) == "table") then
-    source = table2string(source, index, settings)
+    source = table2string(source, depth, formatter)
 
   elseif (type(source) == "number") then
-    source = tostring(round(source, settings.numbers.round))
+    source = tostring(round(source, formatter.numbers.round))
 
-  elseif (type(source) == "string") and settings.strings.display_quotes == true then
+  elseif (type(source) == "string") and formatter.strings.display_quotes == true then
     source = conkat("\"", source, "\"")
 
   elseif (type(source) == "string") then
@@ -122,7 +126,7 @@ stringify = function(source, index, settings)
 
 end
 
-table2string = function(tablevalue, index, settings)
+table2string = function(tablevalue, depth, settings)
     --[[
   Convert a table to human readable string.
   By default formatted on multiples lines for clarity. Specify tdtype=oneline
@@ -134,12 +138,11 @@ table2string = function(tablevalue, index, settings)
   Args:
     tablevalue(table): table to convert to string
     index(int): recursive level of conversions used for indents
-    settings(StrFmtSettings or nil):
+    settings(Formatter or nil):
       Configure how table are displayed.
 
   Returns:
-    str:
-
+    string:
   ]]
 
   -- check if table is empty
@@ -147,9 +150,9 @@ table2string = function(tablevalue, index, settings)
    return "{}"
   end
 
-  -- if no index specified recursive level is 0 (first time)
-  if not index then
-    index = 0
+  -- if no depth specified, recursive level is 0 (first time)
+  if not depth then
+    depth = 0
   end
 
   local tsettings
@@ -162,10 +165,10 @@ table2string = function(tablevalue, index, settings)
   local linebreak_start = "\n"
   local linebreak = "\n"
   local inline_indent = stringrep(
-      " ", index * tsettings.indent + tsettings.indent
+      " ", depth * tsettings.indent + tsettings.indent
   )
   local inline_indent_end = stringrep(
-      " ", index * tsettings.indent
+      " ", depth * tsettings.indent
   )
 
   -- if the table is too long make it one line with no line break
@@ -191,7 +194,7 @@ table2string = function(tablevalue, index, settings)
     -- if table is build with number as keys, just display the value
     if (type(k) == "number") and tsettings.display_indexes == false then
       outtable[#outtable + 1] = inline_indent
-      outtable[#outtable + 1] = stringify(v, index+1, settings)
+      outtable[#outtable + 1] = stringify(v, depth +1, settings)
       outtable[#outtable + 1] = ","
       outtable[#outtable + 1] = linebreak
     else
@@ -200,9 +203,9 @@ table2string = function(tablevalue, index, settings)
         outtable[#outtable + 1] = ""
       else
         outtable[#outtable + 1] = inline_indent
-        outtable[#outtable + 1] = stringify(k, index+1, settings)
+        outtable[#outtable + 1] = stringify(k, depth +1, settings)
         outtable[#outtable + 1] = "="
-        outtable[#outtable + 1] = stringify(v, index+1, settings)
+        outtable[#outtable + 1] = stringify(v, depth +1, settings)
         outtable[#outtable + 1] = ","
         outtable[#outtable + 1] = linebreak
       end
