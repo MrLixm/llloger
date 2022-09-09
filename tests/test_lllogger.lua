@@ -71,13 +71,36 @@ runs[#runs + 1] = function ()
     },
     ["b"] = {10,8,6,4},
   }
-  logger:debug("with line breaks ta = ", ta)
-  logger:debug("with line breaks tb = ", tb)
-  logger:debug("with line breaks tc = ", tc)
+
+  logger:info("with line breaks ta = ", ta)
+  logger:info("with line breaks tb = ", tb)
+  logger:info("with line breaks tc = ", tc)
   logger.formatter.tables.linebreaks = false
-  logger:debug("no line breaks ta = ", ta)
-  logger:debug("no line breaks tb = ", tb)
-  logger:debug("no line breaks tc = ", tc)
+  logger:info("no line breaks ta = ", ta)
+  logger:info("no line breaks tb = ", tb)
+  logger:info("no line breaks tc = ", tc)
+
+  -- edge case, shoudl not break
+  local ts = {
+    ["$a"] = 5,
+    ["$b"] = 6,
+  }
+  logger:info("no line breaks ts = ", ts)
+
+  -- edge case, will break
+  local ts2 = {
+    ["$h$"] = 5,
+    ["$i$"] = 6,
+    ["$j$"] = 6,
+  }
+  logger:info("no line breaks ts2 = ", ts2)
+  print("  ts2 will break and $i$ will disapear")
+
+  -- edge case, will break
+  local ts3 = {"$k$", "$i$", "454", "$i$"}
+  logger:info("no line breaks ts3 = ", ts3)
+  print("  ts3 will break and $i$ will disapear")
+
 
 end
 

@@ -165,26 +165,11 @@ table2string = function(tablevalue, depth, settings)
   local linebreak_start = "\n"
   local linebreak = "\n"
   local inline_indent = stringrep(
-      " ", depth * tsettings.indent + tsettings.indent
+      "$i$", depth * tsettings.indent + tsettings.indent
   )
   local inline_indent_end = stringrep(
-      " ", depth * tsettings.indent
+      "$i$", depth * tsettings.indent
   )
-
-  -- if the table is too long make it one line with no line break
-  if #tablevalue > tsettings.linebreak_treshold then
-    linebreak = ""
-    linebreak_start = ""
-    inline_indent = ""
-    inline_indent_end = ""
-  end
-  -- if specifically asked for the table to be displayed as one line
-  if tsettings.linebreaks == false then
-    linebreak = ""
-    linebreak_start = ""
-    inline_indent = ""
-    inline_indent_end = ""
-  end
 
   -- to avoid string concatenation in loop using a table
   local outtable = {}
@@ -192,6 +177,7 @@ table2string = function(tablevalue, depth, settings)
   outtable[#outtable + 1] = linebreak_start
 
   local table_index = 1
+  -- we can only use pairs() as we dont know if the table keys are only numeric
   for k, v in pairs(tablevalue) do
 
     if tsettings.max_length > 0 and table_index >= tsettings.max_length then
@@ -224,7 +210,22 @@ table2string = function(tablevalue, depth, settings)
   end
   outtable[#outtable + 1] = inline_indent_end
   outtable[#outtable + 1] = "}"
-  return tostring(tableconcat(outtable))
+
+  outtable = tostring(tableconcat(outtable))
+
+  -- if specifically asked for the table to be displayed as one line
+  if tsettings.linebreaks == false then
+    outtable = outtable:gsub("%$i%$", "")
+    outtable = outtable:gsub("\n", "")
+  -- if the table is too long make it one line with no line break
+  elseif table_index > tsettings.linebreak_treshold then
+    outtable = outtable:gsub("%$i%$", "")
+    outtable = outtable:gsub("\n", "")
+  else
+    outtable = outtable:gsub("%$i%$", " ")
+  end
+
+  return outtable
 
 end
 
