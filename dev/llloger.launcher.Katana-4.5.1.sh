@@ -14,5 +14,6 @@ export KATANA_USER_RESOURCE_DIRECTORY=".\dev\_prefs"
 #export KATANA_RESOURCES="$KATANA_RESOURCES;.\dev\KatanaResources"
 
 export LUA_PATH="$LUA_PATH;.\?.lua"
+export LLLOGGER_CONTEXT="opscript"
 
 "$KATANA_HOME\bin\katanaBin.exe"
