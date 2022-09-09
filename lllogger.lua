@@ -66,6 +66,12 @@ if not APPCONTEXT then
   APPCONTEXT = "lua"
 end
 
+
+local LEVEL_OVERRIDE = os.getenv("LLLOGGER_LEVEL_OVERRIDE")
+if LEVEL_OVERRIDE then
+  LEVEL_OVERRIDE = LEVELS[LEVEL_OVERRIDE]
+end
+
 -------------------------------------------------------------------------------
 -- functions/classes
 local conkat
@@ -171,61 +177,61 @@ table2string = function(tablevalue, depth, settings)
       "$i$", depth * tsettings.indent
   )
 
-  -- to avoid string concatenation in loop using a table
-  local outtable = {}
-  outtable[#outtable + 1] = "{"
-  outtable[#outtable + 1] = linebreak_start
+  -- to avoid string concatenation in loop, we use a table
+  local out = {}
+  out[#out + 1] = "{"
+  out[#out + 1] = linebreak_start
 
-  local table_index = 1
+  local table_length = 1
   -- we can only use pairs() as we dont know if the table keys are only numeric
   for k, v in pairs(tablevalue) do
 
-    if tsettings.max_length > 0 and table_index >= tsettings.max_length then
-      outtable[#outtable + 1] = inline_indent
-      outtable[#outtable + 1] = ("[...]")
-      outtable[#outtable + 1] = linebreak
+    if tsettings.max_length > 0 and table_length >= tsettings.max_length then
+      out[#out + 1] = inline_indent
+      out[#out + 1] = ("[...]")
+      out[#out + 1] = linebreak
       break
     end
 
     -- if table is build with number as keys, just display the value
     if (type(k) == "number") and tsettings.display_indexes == false then
-      outtable[#outtable + 1] = inline_indent
-      outtable[#outtable + 1] = stringify(v, depth +1, settings)
-      outtable[#outtable + 1] = ","
-      outtable[#outtable + 1] = linebreak
+      out[#out + 1] = inline_indent
+      out[#out + 1] = stringify(v, depth +1, settings)
+      out[#out + 1] = ","
+      out[#out + 1] = linebreak
     else
 
       if (type(v) == "function") and tsettings.display_functions == false then
-        outtable[#outtable + 1] = ""
+        out[#out + 1] = ""
       else
-        outtable[#outtable + 1] = inline_indent
-        outtable[#outtable + 1] = stringify(k, depth +1, settings)
-        outtable[#outtable + 1] = "="
-        outtable[#outtable + 1] = stringify(v, depth +1, settings)
-        outtable[#outtable + 1] = ","
-        outtable[#outtable + 1] = linebreak
+        out[#out + 1] = inline_indent
+        out[#out + 1] = stringify(k, depth +1, settings)
+        out[#out + 1] = "="
+        out[#out + 1] = stringify(v, depth +1, settings)
+        out[#out + 1] = ","
+        out[#out + 1] = linebreak
       end
     end
-    table_index = table_index + 1
+    table_length = table_length + 1
   end
-  outtable[#outtable + 1] = inline_indent_end
-  outtable[#outtable + 1] = "}"
+  out[#out + 1] = inline_indent_end
+  out[#out + 1] = "}"
 
-  outtable = tostring(tableconcat(outtable))
+  out = tostring(tableconcat(out))
 
   -- if specifically asked for the table to be displayed as one line
   if tsettings.linebreaks == false then
-    outtable = outtable:gsub("%$i%$", "")
-    outtable = outtable:gsub("\n", "")
+    out = out:gsub("%$i%$", "")
+    out = out:gsub("\n", "")
   -- if the table is too long make it one line with no line break
-  elseif table_index > tsettings.linebreak_treshold then
-    outtable = outtable:gsub("%$i%$", "")
-    outtable = outtable:gsub("\n", "")
+  elseif table_length > tsettings.linebreak_treshold then
+    out = out:gsub("%$i%$", "")
+    out = out:gsub("\n", "")
   else
-    outtable = outtable:gsub("%$i%$", " ")
+    out = out:gsub("%$i%$", " ")
   end
 
-  return outtable
+  return out
 
 end
 
