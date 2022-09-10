@@ -200,7 +200,7 @@ runs[#runs + 1] = function ()
   logger.formatter.tables.linebreak_treshold = 4
 
   local ta1 = {2,4,6,8,10,12,14,16,18}
-  local ta2 = {2,4,6,8}
+  local ta2 = {2,4,6}
   local tb = {
     ["a"] = 1,
     ["b"] = 2,
@@ -214,8 +214,8 @@ runs[#runs + 1] = function ()
   print("  ta1 shoudl not break")
   logger:info("This is ta2: ", ta2)
   print("  ta2 should break")
-
   logger:info("This is tb: ", tb)
+  print("  tb should not break")
 end
 
 
