@@ -317,7 +317,7 @@ function Formatter:new(template)
     ["tables"] = {
       ["indent"] = 4,
       -- how much whitespaces is considered an indent
-      ["max_length"] = 0,
+      ["max_length"] = 999,
       -- maximum number of table element that can be displayed before being "cut"
       ["linebreak_treshold"] = 50,
       -- max table size before displaying it as oneline to avoid flooding
