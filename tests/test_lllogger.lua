@@ -104,7 +104,6 @@ runs[#runs + 1] = function ()
 
 end
 
-
 runs[#runs + 1] = function ()
   _runctx("log with duplicate blocking")
   logger:setLevel(logging.DEBUG)
@@ -155,7 +154,6 @@ runs[#runs + 1] = function ()
   logger:info("Goodbye from run06 !")
 end
 
-
 runs[#runs + 1] = function ()
   _runctx("changing duplicate template")
   logger:setLevel(logging.DEBUG)
@@ -194,7 +192,6 @@ runs[#runs + 1] = function ()
 
 end
 
-
 runs[#runs + 1] = function ()
   _runctx("test table linebreak_treshold")
   logger.formatter.tables.linebreak_treshold = 4
@@ -216,6 +213,28 @@ runs[#runs + 1] = function ()
   print("  ta2 should break")
   logger:info("This is tb: ", tb)
   print("  tb should not break")
+end
+
+runs[#runs + 1] = function ()
+  _runctx("test propagate level")
+
+  local loggera = logging.getLogger("alpha.foo")
+  local loggerb = logging.getLogger("beta.foo")
+  local loggeraa = logging.getLogger("alpha.bar")
+  local loggeraaa = logging.getLogger("alpha.bar.test")
+
+  loggera:debug("you should not read that")
+  loggerb:debug("you should not read that")
+  loggeraa:debug("you should not read that")
+  loggeraaa:debug("you should not read that")
+
+  logging.propagateLoggerLevel("alpha", logging.DEBUG)
+
+  loggera:debug("you should read that")
+  loggerb:debug("you should NOT read that")
+  loggeraa:debug("you should read that")
+  loggeraaa:debug("you should read that")
+
 end
 
 

@@ -27,6 +27,16 @@ Returns:
         logger class instance
 ``` 
 
+## ![method](https://img.shields.io/badge/method-4f4f4f) lllogger.propagateLoggerLevel
+
+Set the logging LEVEL to multiple logger starting with the given name.
+
+```
+Args:
+    name(string): start of the name of the logger
+    level(LEVELS): table in LEVELS
+``` 
+
 ## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) lllogger.LEVELS
 
 Tables of all the levels available.

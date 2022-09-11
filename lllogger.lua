@@ -604,6 +604,23 @@ function _M_.getLogger(name, force_new)
 
 end
 
+function _M_.propagateLoggerLevel(name, level)
+  --[[
+  Set the logging LEVEL to multiple logger starting with the given name.
+
+  Args:
+    name(string): start of the name of the logger
+    level(LEVELS): table in LEVELS
+  ]]
+
+  for _, lllogger in pairs(__loggers) do
+    if string.match(lllogger.name, ("^%s"):format(name)) then
+      lllogger:setLevel(level)
+    end
+  end
+
+end
+
 _M_.__loggers = __loggers
 _M_.LEVELS = LEVELS
 _M_.DEBUG = LEVELS.DEBUG

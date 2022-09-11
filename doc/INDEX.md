@@ -38,7 +38,16 @@ logger:warning("any object")
 logger:error("any object")
 ```
 
-By default, the logger level is set to `debug`.
+You can log mutltiple type of object that will be concatenated :
+
+```lua
+local result = {["key"] = "value"}
+logger:info("[doSomething] result is ", result)
+```
+
+## levels
+
+By default, the logger level is set to `INFO`.
 To change it you can use :
 
 ```lua
@@ -71,11 +80,28 @@ logger:info("this message will not be displayed")
 logger:error("this message is displayed")
 ```
 
-You can log mutlitple type of object that will be concatenated :
+For now there is no hierarchical system that link a logger to another. So set
+the LEVEL on multiple logger, you can use the `logging.propagateLoggerLevel` function :
 
 ```lua
-local result = {["key"] = "value"}
-logger:info("[doSomething] result is ", result)
+local logging = require("lllogger")
+
+local loggera = logging.getLogger("alpha.foo")
+local loggerb = logging.getLogger("beta.foo")
+local loggeraa = logging.getLogger("alpha.bar")
+local loggeraaa = logging.getLogger("alpha.bar.test")
+
+loggera:debug("you should NOT read that")
+loggerb:debug("you should NOT read that")
+loggeraa:debug("you should NOT read that")
+loggeraaa:debug("you should NOT read that")
+
+logging.propagateLoggerLevel("alpha", logging.DEBUG)
+
+loggera:debug("you should read that")
+loggerb:debug("you should NOT read that")
+loggeraa:debug("you should read that")
+loggeraaa:debug("you should read that")
 ```
 
 
