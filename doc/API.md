@@ -127,6 +127,29 @@ See the default value to see what type is expected for the argument.
 > True to not display duplicated message and replace them with a message that
 > specify how much time it was repeated.
 
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.time_format 
+> `default="%c"`
+> 
+> How to format the {time} token.
+> See https://www.lua.org/pil/22.1.html for available tokens
+
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.template 
+> `default="[{level:-7}] {time} [{appctx}][{logger}]{message}"`
+> 
+> tokens available are : `[time, message, logger, level, appctx]`
+> 
+> check https://en.cppreference.com/w/c/io/fprintf#Parameters for what
+> string formatting arg are available (defined after the `:`)
+
+
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.template_duplicate 
+> `default="    [{logger}] The last message was repeated <{nrepeat}> times ..."`
+> 
+> tokens available are : `[time ,logger, appctx, nrepeat]`
+>
+> check https://en.cppreference.com/w/c/io/fprintf#Parameters for what
+> string formatting arg are available (defined after the ":")
+
 ## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.numbers.round 
 > `default=3`
 > 

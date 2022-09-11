@@ -138,6 +138,10 @@ the `string.format("%{options}s", token)` function and you can see all of them
 available in the [cpp sprintf documentation](https://en.cppreference.com/w/c/io/fprintf#Parameters).
 
 
+> You can format the `time` token using `Formatter.time_format` attribute.
+> Default is `"%c"` but check https://www.lua.org/pil/22.1.html for all tokens
+> available to format time.
+
 ### types formatting
 
 You can customize how does the logger react
