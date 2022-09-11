@@ -285,7 +285,7 @@ function Formatter:new(template)
 
   -- these are the default values
   local attrs = {
-    ["display_context"] = true,
+
     ["blocks_duplicate"] = true,
 
     ["time_format"] = "%c",  -- %c ~= "09/16/98 23:48:10"
@@ -373,11 +373,6 @@ function Formatter:new(template)
   function attrs:set_template(tmpl)
     -- tmpl(string): template for displaying message, with tokens.
     self.template = tmpl
-  end
-
-  function attrs:set_display_context(enable)
-    -- enable(bool): true to display Logger.ctx when specified
-    self.display_context = enable
   end
 
   function attrs:set_blocks_duplicate(enable)
@@ -609,5 +604,6 @@ _M_.INFO = LEVELS.info
 _M_.WARNING = LEVELS.warning
 _M_.ERROR = LEVELS.error
 _M_.Logger = Logger
+_M_.Formatter = Formatter
 
 return _M_
