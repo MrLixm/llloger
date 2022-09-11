@@ -35,19 +35,19 @@ local LEVELS = {
       --[[
       Log levels available.
       ]]
-      debug = {
+      DEBUG = {
         name = "DEBUG",  -- name displayed in the console
         weight = 10
       },
-      info = {
+      INFO = {
         name = "INFO",
         weight = 20
       },
-      warning = {
+      WARNING = {
         name = "WARNING",
         weight = 30
       },
-      error = {
+      ERROR = {
         name = "ERROR",
         weight = 40,
       }
@@ -71,6 +71,9 @@ local LEVEL_OVERRIDE = os.getenv("LLLOGGER_LEVEL_OVERRIDE")
 if LEVEL_OVERRIDE then
   LEVEL_OVERRIDE = LEVELS[LEVEL_OVERRIDE]
 end
+--[[
+All logger instances will use this level instead of the one set on them.
+]]
 
 -------------------------------------------------------------------------------
 -- functions/classes
@@ -443,7 +446,7 @@ function Logger:new(name)
   local attrs = {
     name = name,
     formatter = Formatter:new(),
-    _level = LEVELS.debug,
+    _level = LEVELS.DEBUG,
     __last = false,
     __lastnum = 0,
 
@@ -483,6 +486,10 @@ function Logger:new(name)
         Only used for error level, else used
     ]]
 
+    if LEVEL_OVERRIDE then
+      self._level = LEVEL_OVERRIDE
+    end
+
     if level.weight < self._level.weight then
       return
     end
@@ -498,7 +505,7 @@ function Logger:new(name)
     end
     messagebuf = tableconcat(messagebuf)
 
-    messagebuf = self.formatter:format(messagebuf, self._level.name, self.name)
+    messagebuf = self.formatter:format(messagebuf, level.name, self.name)
 
     self:_print(messagebuf)
 
@@ -537,19 +544,19 @@ function Logger:new(name)
   end
 
   function attrs:debug(...)
-    self:_log(LEVELS.debug, { ... })
+    self:_log(LEVELS.DEBUG, { ... })
   end
 
   function attrs:info(...)
-    self:_log(LEVELS.info, { ... })
+    self:_log(LEVELS.INFO, { ... })
   end
 
   function attrs:warning(...)
-    self:_log(LEVELS.warning, { ... })
+    self:_log(LEVELS.WARNING, { ... })
   end
 
   function attrs:error(...)
-    self:_log(LEVELS.error,{ ... })
+    self:_log(LEVELS.ERROR,{ ... })
   end
 
   return attrs
@@ -599,10 +606,10 @@ end
 
 _M_.__loggers = __loggers
 _M_.LEVELS = LEVELS
-_M_.DEBUG = LEVELS.debug
-_M_.INFO = LEVELS.info
-_M_.WARNING = LEVELS.warning
-_M_.ERROR = LEVELS.error
+_M_.DEBUG = LEVELS.DEBUG
+_M_.INFO = LEVELS.INFO
+_M_.WARNING = LEVELS.WARNING
+_M_.ERROR = LEVELS.ERROR
 _M_.Logger = Logger
 _M_.Formatter = Formatter
 
