@@ -1,6 +1,6 @@
 {
   "name": "lllogger",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "author": "Liam Collod",
   "license": "Apache 2.0",
   "description": "A simple lua logging module inspired from Python's one.",

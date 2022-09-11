@@ -1,5 +1,5 @@
 local _M_ = {}
-_M_._VERSION = "2.0.0-1"
+_M_._VERSION = "2.0.0"
 _M_._AUTHOR = "<Liam Collod monsieurlixm@gmail.com>"
 _M_._DESCRIPTION = "A simple logging module based on Python one."
 _M_._LICENSE = [[
