@@ -123,7 +123,7 @@ logger.formatter.template = "[{level:-7}] {time} [{appctx}][{logger}]{message}"
 
 The tokens available are :
 
-- `time` : time at which the logge rmessage is created
+- `time` : time at which the logger message is created
 - `message`: message passed to the logger call
 - `logger`: name of the logger
 - `level`: level of the message
@@ -173,19 +173,19 @@ when you are in a big loop and someone forgot to disable the logging call, or
 you had to log in that loop.
 
 To prevent this, duplicates are not logged and once a new log message is no more
-a duplicate, we log a samll message to tell how much duplicates were avoided.
+a duplicate, we log a small message to tell how many duplicates were avoided.
 
 This is enabled by default but can be disabled using `Formatter.blocks_duplicate`.
 
 You can also configure the template for this message using `Formatter.template_duplicate`
 
 ```lua
-logger.formatting.template_duplicate = "    [{logger}] The last message was repeated <{nrepeat}> times ..."
 logger.formatting:set_blocks_duplicate(true)
+logger.formatting.template_duplicate = "    [{logger}] The last message was repeated <{nrepeat}> times ..."
 ```
 
 The tokens available for the template are :
-- `time` : time at which the logge rmessage is created
+- `time` : time at which the logger message is created
 - `logger` : name of the logger
 - `appctx` : global context from where the logger is called, editable via the `LLLOGGER_CONTEXT`
 environment variable.
