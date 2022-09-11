@@ -446,7 +446,7 @@ function Logger:new(name)
   local attrs = {
     name = name,
     formatter = Formatter:new(),
-    _level = LEVELS.DEBUG,
+    _level = LEVELS.INFO,
     __last = false,
     __lastnum = 0,
 
