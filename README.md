@@ -1,7 +1,6 @@
 # lllogger
 
-![lua](https://img.shields.io/badge/Lua-any-4f4f4f?labelColor=000090&logo=lua&logoColor=white)
-![katana version](https://img.shields.io/badge/Katana-any-4f4f4f?labelColor=FCB123&logo=katana&logoColor=black)
+![lua](https://img.shields.io/badge/Lua->=5.1.5-4f4f4f?labelColor=000090&logo=lua&logoColor=white)
 [![License](https://img.shields.io/badge/⚖_license-Apache_2.0-4f4f4f?labelColor=blue)](LICENSE.md)
 
 A simple lua logging module inspired from Python's one.
@@ -16,24 +15,25 @@ Originaly intended to be use with Foundry's Katana software, OpScript feature.
 # Features
 
 ```
-17:23:47 [OpScript][  DEBUG][LlloggerTest] This is a debug message !   
+[DEBUG  ] 09/09/22 23:02:41 [lua][lllogerTest]this is a debug message !
 ```
 
+- change the template used to display message
 - "level" system where you can define what level of message is allowed to be displayed.
 - Multiples logger with different log level can be created in the same script.
-- Convert tables and nested tables to a human-readable string (see settings).
+- Convert tables and nested tables to a human-readable string (see formatting).
 - Multiples arguments can be passed : `logger:debug("text", 69, {"table"})`
-- Should be loop safe (no string concatenation)
-- String formatting settings class with options to format the displayed output:
+- Should be "loop safe" (no string concatenation)
+- Formatting settings with options to format the displayed output:
   - number : round decimals
   - string : display literal quotes around strings
   - tables : display tables with line breaks or as one-line
   - tables : indent amount for multi-line tables
   - tables : toggle display of tables indexes
   - tables : maximum table length allowed before the table is forced to one-line
+  - tables : maximum lemgth of a table before it is cut.
 - Options for avoiding message flooding where the same message is repeated a lot of time
 
-Check [the project](https://github.com/MrLixm/llloger/projects/1) for what's next.
 
 # Documentation
 

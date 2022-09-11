@@ -1,28 +1,21 @@
---[[
-version = 20
-name = "lllogger"
-author = "Liam Collod"
-last_modified = "27/02/2022"
-summary = """
-A simple logging module based on Python one. Originaly made for use with
-Foundry's Katana software, OpScript feature.
-This is a module version.
-"""
-license = """
-Copyright 2022 Liam Collod
+local _M_ = {}
+_M_._VERSION = "2.0.0"
+_M_._AUTHOR = "<Liam Collod monsieurlixm@gmail.com>"
+_M_._DESCRIPTION = "A simple logging module based on Python one."
+_M_._LICENSE = [[
+  Copyright 2022 Liam Collod
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
 
-   http://www.apache.org/licenses/LICENSE-2.0
+     http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
 ]]
 
 -- make some global lua fonction local to improve perfs
@@ -42,29 +35,45 @@ local LEVELS = {
       --[[
       Log levels available.
       ]]
-      debug = {
-        name = "  DEBUG",  -- name displayed in the console
+      DEBUG = {
+        name = "DEBUG",  -- name displayed in the console
         weight = 10
       },
-      info = {
-        name = "   INFO",
+      INFO = {
+        name = "INFO",
         weight = 20
       },
-      warning = {
+      WARNING = {
         name = "WARNING",
         weight = 30
       },
-      error = {
-        name = "  ERROR",
+      ERROR = {
+        name = "ERROR",
         weight = 40,
       }
 }
 
-local TIMEFORMAT = "%02d:%02d:%02d"
-
 -- list of instances of all loggers ever created
 -- numerical table
 local __loggers = {}
+
+local APPCONTEXT = os.getenv("LLLOGGER_CONTEXT")
+--[[
+This is available as a token in the Formatter template and allow to distinguinsh
+llloger message from other loggers from potential other languages.
+]]
+if not APPCONTEXT then
+  APPCONTEXT = "lua"
+end
+
+
+local LEVEL_OVERRIDE = os.getenv("LLLOGGER_LEVEL_OVERRIDE")
+if LEVEL_OVERRIDE then
+  LEVEL_OVERRIDE = LEVELS[LEVEL_OVERRIDE]
+end
+--[[
+All logger instances will use this level instead of the one set on them.
+]]
 
 -------------------------------------------------------------------------------
 -- functions/classes
@@ -72,7 +81,8 @@ local conkat
 local table2string
 local stringify
 local round
-local StrFmtSettings = {}
+local tokenReplace
+local Formatter = {}
 local Logger = {}
 
 conkat = function (...)
@@ -86,31 +96,31 @@ conkat = function (...)
   return tableconcat(buf)
 end
 
-stringify = function(source, index, settings)
+stringify = function(source, depth, formatter)
   --[[
   Convert the source to a readable string , based on it's type.
 
   Args:
     source(any): any type
-    index(int): recursive level of stringify
-    settings(StrFmtSettings or nil): configure how source is formatted
+    depth(int): recursive level of stringify
+    settings(Formatter or nil): configure how source is formatted
   ]]
-  if not settings then
-    settings = StrFmtSettings:new()
+  if not formatter then
+    formatter = Formatter:new()
   end
 
-  if not index then
-    index = 0
+  if not depth then
+    depth = 0
   end
 
 
   if (type(source) == "table") then
-    source = table2string(source, index, settings)
+    source = table2string(source, depth, formatter)
 
   elseif (type(source) == "number") then
-    source = tostring(round(source, settings.numbers.round))
+    source = tostring(round(source, formatter.numbers.round))
 
-  elseif (type(source) == "string") and settings.strings.display_quotes == true then
+  elseif (type(source) == "string") and formatter.strings.display_quotes == true then
     source = conkat("\"", source, "\"")
 
   elseif (type(source) == "string") then
@@ -125,7 +135,7 @@ stringify = function(source, index, settings)
 
 end
 
-table2string = function(tablevalue, index, settings)
+table2string = function(tablevalue, depth, settings)
     --[[
   Convert a table to human readable string.
   By default formatted on multiples lines for clarity. Specify tdtype=oneline
@@ -137,12 +147,11 @@ table2string = function(tablevalue, index, settings)
   Args:
     tablevalue(table): table to convert to string
     index(int): recursive level of conversions used for indents
-    settings(StrFmtSettings or nil):
+    settings(Formatter or nil):
       Configure how table are displayed.
 
   Returns:
-    str:
-
+    string:
   ]]
 
   -- check if table is empty
@@ -150,71 +159,82 @@ table2string = function(tablevalue, index, settings)
    return "{}"
   end
 
-  -- if no index specified recursive level is 0 (first time)
-  if not index then
-    index = 0
+  -- if no depth specified, recursive level is 0 (first time)
+  if not depth then
+    depth = 0
   end
 
   local tsettings
   if settings and settings.tables then
     tsettings = settings.tables
   else
-    tsettings = StrFmtSettings:new().tables
+    tsettings = Formatter:new().tables
   end
 
   local linebreak_start = "\n"
   local linebreak = "\n"
   local inline_indent = stringrep(
-      " ", index * tsettings.indent + tsettings.indent
+      "$i$", depth * tsettings.indent + tsettings.indent
   )
   local inline_indent_end = stringrep(
-      " ", index * tsettings.indent
+      "$i$", depth * tsettings.indent
   )
 
-  -- if the table is too long make it one line with no line break
-  if #tablevalue > tsettings.length_max then
-    linebreak = ""
-    inline_indent = ""
-    inline_indent_end = ""
-  end
-  -- if specifically asked for the table to be displayed as one line
-  if tsettings.linebreaks == false then
-    linebreak = ""
-    linebreak_start = ""
-    inline_indent = ""
-    inline_indent_end = ""
-  end
+  -- to avoid string concatenation in loop, we use a table
+  local out = {}
+  out[#out + 1] = "{"
+  out[#out + 1] = linebreak_start
 
-  -- to avoid string concatenation in loop using a table
-  local outtable = {}
-  outtable[#outtable + 1] = "{"
-  outtable[#outtable + 1] = linebreak_start
-
+  local table_length = 1
+  -- we can only use pairs() as we dont know if the table keys are only numeric
   for k, v in pairs(tablevalue) do
+
+    if tsettings.max_length > 0 and table_length >= tsettings.max_length then
+      out[#out + 1] = inline_indent
+      out[#out + 1] = ("[...]")
+      out[#out + 1] = linebreak
+      break
+    end
+
     -- if table is build with number as keys, just display the value
     if (type(k) == "number") and tsettings.display_indexes == false then
-      outtable[#outtable + 1] = inline_indent
-      outtable[#outtable + 1] = stringify(v, index+1, settings)
-      outtable[#outtable + 1] = ","
-      outtable[#outtable + 1] = linebreak
+      out[#out + 1] = inline_indent
+      out[#out + 1] = stringify(v, depth +1, settings)
+      out[#out + 1] = ","
+      out[#out + 1] = linebreak
     else
 
       if (type(v) == "function") and tsettings.display_functions == false then
-        outtable[#outtable + 1] = ""
+        out[#out + 1] = ""
       else
-        outtable[#outtable + 1] = inline_indent
-        outtable[#outtable + 1] = stringify(k, index+1, settings)
-        outtable[#outtable + 1] = "="
-        outtable[#outtable + 1] = stringify(v, index+1, settings)
-        outtable[#outtable + 1] = ","
-        outtable[#outtable + 1] = linebreak
+        out[#out + 1] = inline_indent
+        out[#out + 1] = stringify(k, depth +1, settings)
+        out[#out + 1] = "="
+        out[#out + 1] = stringify(v, depth +1, settings)
+        out[#out + 1] = ","
+        out[#out + 1] = linebreak
       end
-
     end
+    table_length = table_length + 1
   end
-  outtable[#outtable + 1] = inline_indent_end
-  outtable[#outtable + 1] = "}"
-  return tostring(tableconcat(outtable))
+  out[#out + 1] = inline_indent_end
+  out[#out + 1] = "}"
+
+  out = tostring(tableconcat(out))
+
+  -- if specifically asked for the table to be displayed as one line
+  if tsettings.linebreaks == false then
+    out = out:gsub("%$i%$", "")
+    out = out:gsub("\n", "")
+  -- if the table is too long make it one line with no line break
+  elseif table_length > tsettings.linebreak_treshold then
+    out = out:gsub("%$i%$", "")
+    out = out:gsub("\n", "")
+  else
+    out = out:gsub("%$i%$", " ")
+  end
+
+  return out
 
 end
 
@@ -234,29 +254,78 @@ round = function(num, numDecimalPlaces)
   )
 end
 
-function StrFmtSettings:new()
+tokenReplace = function(token, source, value)
   --[[
-  A base class that hold configuration settings for string formatting used
-  by stringify() and table2string()
+  Replace the given <token> existing or not in the <source> with the given <value>.
+
+  token are expressed as "{token}" in <source> but also as "{token:args}" where
+  "args" are passed to string.format (https://en.cppreference.com/w/c/io/fprintf#Parameters)
+
+  Args:
+    token(string): token to find in source
+    source(string): template string where we can find the token
+    value(string): any string to replace the token with
+
+  Returns:
+    string:
+      source argument with the given <token> replace by <value> if <token> found.
+  ]]
+  local format_arg = source:match(("{%s:([^}]+)}"):format(token))
+  local replace_with = "%s"
+  if format_arg then
+    replace_with = ("%%%ss"):format(format_arg)
+  end
+  replace_with = replace_with:format(value)
+  local replaced = source:gsub(("{%s[^}]*}"):format(token), replace_with)
+  return replaced
+end
+
+
+function Formatter:new(template)
+  --[[
+  The logger message formatter. Configure how message are displayed.
   ]]
 
   -- these are the default values
   local attrs = {
-    ["display_time"] = true,
-    ["display_context"] = true,
+
     ["blocks_duplicate"] = true,
-    -- how much decimals should be kept for floating point numbers
+
+    ["time_format"] = "%c",  -- %c ~= "09/16/98 23:48:10"
+    --[[
+    see https://www.lua.org/pil/22.1.html for available tokens
+    ]]
+
+    ["template"] = "[{level:-7}] {time} [{appctx}][{logger}]{message}",
+    --[[
+    tokens available are :
+    [time, message, logger, level, appctx]
+
+    check https://en.cppreference.com/w/c/io/fprintf#Parameters for what
+    string formatting arg are available (defined after the ":")
+    ]]
+    ["template_duplicate"] = "    [{logger}] The last message was repeated <{nrepeat}> times ...",
+    --[[
+    tokens available are :
+    [time ,logger, appctx ,nrepeat]
+
+    check https://en.cppreference.com/w/c/io/fprintf#Parameters for what
+    string formatting arg are available (defined after the ":")
+    ]]
+
     ["numbers"] = {
       ["round"] = 3
+      -- how much decimals should be kept for floating point numbers
     },
-    -- nil by default cause the table2string already have some defaults
     ["tables"] = {
-      -- how much whitespaces is considered an indent
       ["indent"] = 4,
+      -- how much whitespaces is considered an indent
+      ["max_length"] = 999,
+      -- maximum number of table element that can be displayed before being "cut"
+      ["linebreak_treshold"] = 50,
       -- max table size before displaying it as oneline to avoid flooding
-      ["length_max"] = 50,
-      -- true to display the table on multiples lines with indents
       ["linebreaks"] = true,
+      -- true to display the table on multiples lines with indents
       ["display_indexes"] = false,
       ["display_functions"] = true
     },
@@ -265,14 +334,48 @@ function StrFmtSettings:new()
     }
   }
 
-  function attrs:set_display_time(enable)
-    -- enable(bool): true to display the current time as h:m:s
-    self.display_time = enable
+  if template then
+    attrs["template"] = template
   end
 
-  function attrs:set_display_context(enable)
-    -- enable(bool): true to display Logger.ctx
-    self.display_context = enable
+  function attrs:format(message, level, logger)
+    --[[
+    Return the string to log for the given parameters.
+    They will be applied on the template.
+
+    Returns:
+      string:
+    ]]
+    local out = self.template
+    local time = os.date(self.time_format)
+    out = tokenReplace("time", out, time)
+    out = tokenReplace("message", out, message)
+    out = tokenReplace("logger", out, logger)
+    out = tokenReplace("level", out, level)
+    out = tokenReplace("appctx", out, APPCONTEXT)
+    return out
+  end
+
+  function attrs:formatDuplicate(logger, repeated)
+    --[[
+    Return the string to log to inform that the previous message has been
+    repeated <repeated> number of times.
+
+    Returns:
+      string:
+    ]]
+    local out = self.template_duplicate
+    local time = os.date(self.time_format)
+    out = tokenReplace("time", out, time)
+    out = tokenReplace("logger", out, logger)
+    out = tokenReplace("appctx", out, APPCONTEXT)
+    out = tokenReplace("nrepeat", out, repeated)
+    return out
+  end
+
+  function attrs:set_template(tmpl)
+    -- tmpl(string): template for displaying message, with tokens.
+    self.template = tmpl
   end
 
   function attrs:set_blocks_duplicate(enable)
@@ -300,9 +403,14 @@ function StrFmtSettings:new()
     self.tables.linebreaks = display_value
   end
 
-  function attrs:set_tbl_length_max(length_max)
-    -- length_max(int):
-    self.tables.length_max = length_max
+  function attrs:set_tbl_max_length(length)
+    -- length(int):
+    self.tables.max_length = length
+  end
+
+  function attrs:set_tbl_linebreak_treshold(linebreak_treshold)
+    -- linebreak_treshold(int):
+    self.tables.linebreak_treshold = linebreak_treshold
   end
 
   function attrs:set_tbl_indent(indent)
@@ -318,6 +426,7 @@ function StrFmtSettings:new()
   return attrs
 
 end
+
 
 function Logger:new(name)
   --[[
@@ -336,73 +445,69 @@ function Logger:new(name)
 
   local attrs = {
     name = name,
-    formatting = StrFmtSettings:new(),
-    ctx = false,
-    _level = LEVELS.debug,
+    formatter = Formatter:new(),
+    _level = LEVELS.INFO,
     __last = false,
     __lastnum = 0,
 
   }
 
-  function attrs:set_level(level)
-    -- level(string or nil): see self.levels keys for value
+  function attrs:setLevel(level)
+    -- level(string or nil): see LEVELS keys for values available
 
     if level == nil then
       return
     end
 
-    if LEVELS[level] ~= nil then
-      self._level = LEVELS[level]
+    if level.weight == nil or level.name == nil then
+      error("[setLevel] level argument passed doesn't seems to have the expected attributes")
+    else
+      self._level = level
     end
 
   end
 
-  function attrs:_log(level, messages, ctx)
+  function attrs:setFormatter(formatter)
+    -- formatter(Formatter): instance of the Formatter class to use
+
+    if formatter == nil then
+      return
+    end
+    self.formatter = formatter
+
+  end
+
+  function attrs:_log(level, messages)
     --[[
     Args:
-      level(table): level object as defined in self.levels
-      messages(table): list of object to display
+      level(table): level object as defined in LEVELS
+      messages(table): list of object to display as message or a single object
       ctx(str or nil): from where the log function is executed.
         Only used for error level, else used
     ]]
 
+    if LEVEL_OVERRIDE then
+      self._level = LEVEL_OVERRIDE
+    end
+
     if level.weight < self._level.weight then
       return
     end
-    -- avoid string conact in loops using a table buffer
-    local outbuf = {}
+    -- avoid string concat in loops using a table buffer
+    local messagebuf = {}
     -- make sure messages is always a table to iterate later
     if (type(messages)~="table") then
       messages = {messages}
     end
 
-    ctx = ctx or self.ctx
-
-    outbuf[#outbuf + 1] = string.format("[%-7s] ", level.name)
-
-    if self.formatting.display_time then
-      local time = os.date("*t")  -- https://stackoverflow.com/q/12466950/13806195
-      outbuf[#outbuf + 1] = (TIMEFORMAT):format(time.hour, time.min, time.sec)
-      outbuf[#outbuf + 1] = " "
-    end
-
-    outbuf[#outbuf + 1] = "[OpScript]["
-    outbuf[#outbuf + 1] = self.name
-    outbuf[#outbuf + 1] = "]"
-    if (ctx or self.ctx) and self.formatting.display_context == true then
-      outbuf[#outbuf + 1] = "["
-      outbuf[#outbuf + 1] = stringify(ctx, nil, self.formatting)
-      outbuf[#outbuf + 1] = "] "
-    end
     for _, mvalue in ipairs(messages) do
-      outbuf[#outbuf + 1] = stringify(mvalue, nil, self.formatting)
-      outbuf[#outbuf + 1] = " "
+      messagebuf[#messagebuf + 1] = stringify(mvalue, nil, self.formatter)
     end
+    messagebuf = tableconcat(messagebuf)
 
-    self.ctx = false
+    messagebuf = self.formatter:format(messagebuf, level.name, self.name)
 
-    -- concatenate the buffer to string and print
-    self:_print(tableconcat(outbuf))
+    self:_print(messagebuf)
 
   end
 
@@ -413,7 +518,7 @@ function Logger:new(name)
     ]]
 
     -- we dont need all the later stuff if settings disable it
-    if self.formatting.blocks_duplicate == false then
+    if self.formatter.blocks_duplicate == false then
       print(message)
       return
     end
@@ -426,13 +531,7 @@ function Logger:new(name)
     else
       -- if the previous message was repeated, tell it to the user
       if self.__lastnum > 0 then
-        local buf = {}
-        buf[#buf + 1] = "    ... ["
-        buf[#buf + 1] = self.name
-        buf[#buf + 1] = "] The last message was repeated <"
-        buf[#buf + 1] = self.__lastnum
-        buf[#buf + 1] = "> times..."
-        print(tableconcat(buf))
+        print(self.formatter:formatDuplicate(self.name, self.__lastnum))
       end
       -- and then reset to the new message
       self.__last = message
@@ -445,23 +544,19 @@ function Logger:new(name)
   end
 
   function attrs:debug(...)
-    self:_log(LEVELS.debug, { ... })
+    self:_log(LEVELS.DEBUG, { ... })
   end
 
   function attrs:info(...)
-    self:_log(LEVELS.info, { ... })
+    self:_log(LEVELS.INFO, { ... })
   end
 
   function attrs:warning(...)
-    self:_log(LEVELS.warning, { ... })
+    self:_log(LEVELS.WARNING, { ... })
   end
 
   function attrs:error(...)
-    self:_log(
-      LEVELS.error,
-      { ... },
-      conkat(debug.getinfo(2).name, ":line", debug.getinfo(2).currentline)
-    )
+    self:_log(LEVELS.ERROR,{ ... })
   end
 
   return attrs
@@ -472,24 +567,15 @@ end
 -- PUBLIC FUNCTIONS
 
 
-local function get_levels(self)
-  --[[
-  Returns:
-      table[num=str]:
-          {"debug level name", ...}
-  ]]
-  local levels_name = {}
-  for k, _ in pairs(LEVELS) do
-    table.insert(levels_name, k)
-  end
-  return levels_name
-end
-
-
-local function get_logger(self, name)
+function _M_.getLogger(name, force_new)
   --[[
   Return the logger for the given name.
-  Create a new instance if not already existing else return the existing instance.
+  If no instance is existing, create a new one.
+
+  Args:
+    name(string): name of the logger to create/retrieve
+    force_new(boolean):
+      if True, force the creation of a new instance even if its already exists
 
   Returns:
     Logger:
@@ -497,23 +583,51 @@ local function get_logger(self, name)
   ]]
 
   local logger_instance
+  local logger_index
 
-  for _, lllogger in ipairs(__loggers) do
+  for index, lllogger in ipairs(__loggers) do
     if lllogger.name == name then
       logger_instance = lllogger
+      logger_index = index
     end
   end
 
   if not logger_instance then
     logger_instance = Logger:new(name)
     table.insert(__loggers, logger_instance)
+  elseif force_new then
+    logger_instance = Logger:new(name)
+    __loggers[logger_index] = logger_instance
   end
 
   return logger_instance
 
 end
 
-return {
-  get_logger = get_logger,
-  list_levels = get_levels
-}
+function _M_.propagateLoggerLevel(name, level)
+  --[[
+  Set the logging LEVEL to multiple logger starting with the given name.
+
+  Args:
+    name(string): start of the name of the logger
+    level(LEVELS): table in LEVELS
+  ]]
+
+  for _, lllogger in pairs(__loggers) do
+    if string.match(lllogger.name, ("^%s"):format(name)) then
+      lllogger:setLevel(level)
+    end
+  end
+
+end
+
+_M_.__loggers = __loggers
+_M_.LEVELS = LEVELS
+_M_.DEBUG = LEVELS.DEBUG
+_M_.INFO = LEVELS.INFO
+_M_.WARNING = LEVELS.WARNING
+_M_.ERROR = LEVELS.ERROR
+_M_.Logger = Logger
+_M_.Formatter = Formatter
+
+return _M_

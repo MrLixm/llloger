@@ -10,9 +10,9 @@ Module import :
 local logging = require("lllogger")
 ```
 
-# ![module](https://img.shields.io/badge/module-5663B3) logging
+# ![module](https://img.shields.io/badge/module-5663B3) lllogger
 
-## ![method](https://img.shields.io/badge/method-4f4f4f) logging:get_logger
+## ![method](https://img.shields.io/badge/method-4f4f4f) lllogger.getLogger
 
 Return the logger for the given name.
 Create a new instance if not already existing else return the existing instance.
@@ -27,30 +27,56 @@ Returns:
         logger class instance
 ``` 
 
-## ![method](https://img.shields.io/badge/method-4f4f4f) logging:list_levels
+## ![method](https://img.shields.io/badge/method-4f4f4f) lllogger.propagateLoggerLevel
+
+Set the logging LEVEL to multiple logger starting with the given name.
 
 ```
-Returns:
-    table[num=str]:
-        {"debug level name", ...}
-```
+Args:
+    name(string): start of the name of the logger
+    level(LEVELS): table in LEVELS
+``` 
 
-# ![class](https://img.shields.io/badge/class-6F5ADC) Logger
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) lllogger.LEVELS
+
+Tables of all the levels available.
+
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) lllogger.DEBUG
+
+Table representing the DEBUG level.
+
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) lllogger.INFO
+
+Table representing the INFO level.
+
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) lllogger.WARNING
+
+Table representing the WARNING level.
+
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) lllogger.ERROR
+
+Table representing the ERROR level.
+
+
+# ![class](https://img.shields.io/badge/class-6F5ADC) lllogger.Logger
 
 The Logger class available public methods.
 
-## ![method](https://img.shields.io/badge/method-4f4f4f) Logger:set_level
+## ![method](https://img.shields.io/badge/method-4f4f4f) Logger:setLevel
 
 ```
-Note:
-    Does nothing if the level is not valid.
-
 Args :
-    level(str or nil): 
-        name of the log level to set as current.
-        See get_levels() table's keys for possible values.
-
+    level(LEVELS or nil): 
+        one of hte level defined in LEVELS
 ``` 
+
+## ![method](https://img.shields.io/badge/method-4f4f4f) Logger:setFormatter
+
+```
+Args :
+    formatter(Formatter or nil): instance of the Formatter class to use
+``` 
+
 
 ## ![method](https://img.shields.io/badge/method-4f4f4f) Logger:debug
 ## ![method](https://img.shields.io/badge/method-4f4f4f) Logger:info
@@ -66,16 +92,16 @@ Args :
 
 ``` 
 
-## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Logger.formatting
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Logger.formatter
 
-Return the current StrFmtSettings instance being used.
+Return the current Formatter instance being used.
 This allows to configure how lua objets are converted to string for display.
-See [StrFmtSettings](#classhttpsimgshieldsiobadgeclass-6f5adc-strfmtsettings).
+See [Formatter](#classhttpsimgshieldsiobadgeclass-6f5adc-Formatter).
 
 
 ```
-StrFmtSettings:
-    An StrFmtSettings class instance with default or modified settings.
+Formatter:
+    An Formatter class instance with default or modified settings.
 ``` 
 
 
@@ -87,94 +113,98 @@ Return name of the current logger instance.
 str:
 ``` 
 
-## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Logger.ctx
 
-A string representing the last context from where the logger was called from.
-You should only set this.
+# ![class](https://img.shields.io/badge/class-6F5ADC) lllogger.Formatter
 
-It is reset each time a message in log, so the goal is to set it before logging
-a message.
-
-You also need to have `Logger.formatting.display_context` set to true to have
-it displayed in the final message.
-
-```
-str:
-``` 
-
-
-# ![class](https://img.shields.io/badge/class-6F5ADC) StrFmtSettings
-
-Modify StrFmtSettings settings you can use it as table and modify its key as usual
+Modify Formatter settings you can use it as table and modify its key as usual
 or use the pre-build methods. 
 
-See the default value to see what type is expecte for the argument.
+See the default value to see what type is expected for the argument.
 
-## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) StrFmtSettings.display_time 
-> `default=true`
-> 
-> True to display the current time at beginning of the message. Formatted as hour:min:seconds.
-
-## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) StrFmtSettings.display_context 
-> `default=true`
-> 
-> True to display the line from where the logger was called from.
-
-## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) StrFmtSettings.blocks_duplicate 
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.blocks_duplicate 
 > `default=true`
 > 
 > True to not display duplicated message and replace them with a message that
 > specify how much time it was repeated.
 
-## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) StrFmtSettings.numbers.round 
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.time_format 
+> `default="%c"`
+> 
+> How to format the {time} token.
+> See https://www.lua.org/pil/22.1.html for available tokens
+
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.template 
+> `default="[{level:-7}] {time} [{appctx}][{logger}]{message}"`
+> 
+> tokens available are : `[time, message, logger, level, appctx]`
+> 
+> check https://en.cppreference.com/w/c/io/fprintf#Parameters for what
+> string formatting arg are available (defined after the `:`)
+
+
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.template_duplicate 
+> `default="    [{logger}] The last message was repeated <{nrepeat}> times ..."`
+> 
+> tokens available are : `[time ,logger, appctx, nrepeat]`
+>
+> check https://en.cppreference.com/w/c/io/fprintf#Parameters for what
+> string formatting arg are available (defined after the ":")
+
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.numbers.round 
 > `default=3`
 > 
 > Number of decimals to round numbers to.
 
-## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) StrFmtSettings.tables.indent 
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.tables.indent 
 > `default=4`
 > 
 > Number of whitespace as indents used to display tables
 
-## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) StrFmtSettings.tables.length_max 
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.tables.linebreak_treshold 
 > `default=50`
 > 
 > Maximum length (#table) of the tabel before it being displayed as "one-line"
 > (with no line-breaks)
+> 
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.tables.max_length 
+> `default=999`
+> 
+> maximum number of table element that can be displayed before being "cut"
 
-## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) StrFmtSettings.tables.linebreaks 
+
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.tables.linebreaks 
 > `default=true`
 > 
 > If the table length is smaller than `tables.length_max`, use a line-break 
 > after each key/value pair being displayed.
 
-## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) StrFmtSettings.tables.display_indexes 
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.tables.display_indexes 
 > `default=false`
 > 
 > If true, numerical tables have their key also being displayed like `{1:..., 2:...}`.
 
-## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) StrFmtSettings.tables.display_functions 
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.tables.display_functions 
 > `default=true`
 > 
 > If true, values storing a function in the table are displayed.
 
-## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) StrFmtSettings.strings.display_quotes 
+## ![attribute](https://img.shields.io/badge/attribute-4f4f4f) Formatter.strings.display_quotes 
 > `default=false`
 > 
 > If true, every string is wrap with the `""` around. 
 
-
-## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_display_time
-## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_display_context
-## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_blocks_duplicate
-## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_num_round
-## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_tbl_indent
-## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_tbl_length_max
-## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_tbl_linebreaks
-## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_tbl_display_indexes
-## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_tbl_display_functions
-## ![method](https://img.shields.io/badge/method-4f4f4f) StrFmtSettings:set_str_display_quotes
-
+## ![method](https://img.shields.io/badge/method-4f4f4f)Formatter:format
+## ![method](https://img.shields.io/badge/method-4f4f4f)Formatter:formatDuplicate
+## ![method](https://img.shields.io/badge/method-4f4f4f)Formatter:set_template
+## ![method](https://img.shields.io/badge/method-4f4f4f)Formatter:set_blocks_duplicate
+## ![method](https://img.shields.io/badge/method-4f4f4f)Formatter:set_num_round
+## ![method](https://img.shields.io/badge/method-4f4f4f)Formatter:set_str_display_quotes
+## ![method](https://img.shields.io/badge/method-4f4f4f)Formatter:set_tbl_display_indexes
+## ![method](https://img.shields.io/badge/method-4f4f4f)Formatter:set_tbl_linebreaks
+## ![method](https://img.shields.io/badge/method-4f4f4f)Formatter:set_tbl_max_length
+## ![method](https://img.shields.io/badge/method-4f4f4f)Formatter:set_tbl_linebreak_treshold
+## ![method](https://img.shields.io/badge/method-4f4f4f)Formatter:set_tbl_indent
+## ![method](https://img.shields.io/badge/method-4f4f4f)Formatter:set_tbl_display_functions
 
 
 ---
