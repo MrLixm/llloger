@@ -456,10 +456,10 @@ function Logger:new(name)
       return
     end
 
-    if LEVELS[level] ~= nil then
-      self._level = LEVELS[level]
+    if level.weight == nil or level.name == nil then
+      error("[setLevel] level argument passed doesn't seems to have the expected attributes")
     else
-      error("Cannot set current Logger <"..self.name.."> to level "..tostring(level))
+      self._level = level
     end
 
   end

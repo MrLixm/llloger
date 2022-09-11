@@ -29,7 +29,7 @@ runs[#runs + 1] = function ()
   -- should print
   logger:debug("this is a debug message")
 
-  logger:setLevel("error")
+  logger:setLevel(logging.ERROR)
 
   logger:info("!! this should not be printed")
   logger:error("this should be printed")
@@ -38,14 +38,14 @@ end
 
 runs[#runs + 1] = function ()
   _runctx("log level change after a first change")
-  logger:setLevel("debug")
+  logger:setLevel(logging.DEBUG)
   logger:debug("this is a debug message, should be printed.")
 
 end
 
 runs[#runs + 1] = function ()
   _runctx("log with multiple argument types")
-  logger:setLevel("debug")
+  logger:setLevel(logging.DEBUG)
   local t = {"2", "4", "8"}
   logger:debug("Debug:", 100, ", t=", t)
 
@@ -107,7 +107,7 @@ end
 
 runs[#runs + 1] = function ()
   _runctx("log with duplicate blocking")
-  logger:setLevel("debug")
+  logger:setLevel(logging.DEBUG)
   logger.formatter:set_blocks_duplicate(true)
 
   logger:info("Hello from run04 ! You should now see multiple message :")
@@ -125,7 +125,7 @@ end
 
 runs[#runs + 1] = function ()
   _runctx("log with duplicate blocking special case 01")
-  logger:setLevel("debug")
+  logger:setLevel(logging.DEBUG)
   logger.formatter:set_blocks_duplicate(true)
 
   logger:info("Hello from run05 !")
@@ -140,7 +140,7 @@ end
 
 runs[#runs + 1] = function ()
   _runctx("changing global formatting")
-  logger:setLevel("debug")
+  logger:setLevel(logging.DEBUG)
   logger.formatter:set_blocks_duplicate(true)
   logger.formatter.template = "{time} [{level:9}] {{appctx}}({logger}){message}"
   logger.formatter.time_format = "%H:%M:%S"
@@ -158,7 +158,7 @@ end
 
 runs[#runs + 1] = function ()
   _runctx("changing duplicate template")
-  logger:setLevel("debug")
+  logger:setLevel(logging.DEBUG)
   logger.formatter:set_blocks_duplicate(true)
   logger.formatter.template_duplicate = "  {time} repeated {nrepeat} times"
   logger.formatter.time_format = "%H:%M:%S"
