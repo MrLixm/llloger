@@ -31,10 +31,8 @@ local type = type
 -------------------------------------------------------------------------------
 -- CONSTANTS
 
+--- Log levels available.
 local LEVELS = {
-      --[[
-      Log levels available.
-      ]]
       DEBUG = {
         name = "DEBUG",  -- name displayed in the console
         weight = 10
@@ -53,42 +51,70 @@ local LEVELS = {
       }
 }
 
--- list of instances of all loggers ever created
--- numerical table
+--- list of instances of all loggers ever created
+--- numerical table
 local __loggers = {}
 
+--- This is available as a token in the Formatter template and allow to distinguinsh
+--- llloger message from other loggers from potential other languages.
 local APPCONTEXT = os.getenv("LLLOGGER_CONTEXT")
---[[
-This is available as a token in the Formatter template and allow to distinguinsh
-llloger message from other loggers from potential other languages.
-]]
 if not APPCONTEXT then
   APPCONTEXT = "lua"
 end
 
 
+--- All logger instances will use this level instead of the one set on them.
 local LEVEL_OVERRIDE = os.getenv("LLLOGGER_LEVEL_OVERRIDE")
 if LEVEL_OVERRIDE then
   LEVEL_OVERRIDE = LEVELS[LEVEL_OVERRIDE]
 end
---[[
-All logger instances will use this level instead of the one set on them.
-]]
 
 -------------------------------------------------------------------------------
 -- functions/classes
+
+--- The loop-safe string concatenation method.
+--- @return string
 local conkat
+
+--- Convert a table to human readable string.
+--- By default formatted on multiples lines for clarity. Specify tdtype=oneline
+---   to get no line breaks.
+--- If the key is a number, only the value is kept.
+--- If the key is something else, it is formatted to "stringify(key)=stringify(value),"
+--- If the table is too long (max_length), it is formatted as oneline
+--- @param tablevalue table table to convert to string
+--- @param depth number recursive level of stringify
+--- @param settings Formatter|nil Configure how table are displayed.
+--- @return string
 local table2string
+
+--- Convert the source to a readable string , based on it's type.
+--- @param source any any type
+--- @param depth number recursive level of stringify
+--- @param formatter Formatter configure how source is formatted
 local stringify
+
+--- Source: http://lua-users.org/wiki/SimpleRound
+--- @param num number number to round
+--- @param numDecimalPlaces number number of decimal to keep
+--- @return number
 local round
+
+--- token are expressed as "{token}" in <source> but also as "{token:args}" where
+--- "args" are passed to string.format (https://en.cppreference.com/w/c/io/fprintf#Parameters)
+--- @param token string  token to find in source
+--- @param source string template string where we can find the token
+--- @param value string any string to replace the token with
+--- @return string source argument with the given <token> replace by <value> if <token> found.
 local tokenReplace
+
+--- @class Formatter
 local Formatter = {}
+
+--- @class Logger
 local Logger = {}
 
 conkat = function (...)
-  --[[
-  The loop-safe string concatenation method.
-  ]]
   local buf = {}
   for i=1, select("#",...) do
     buf[ #buf + 1 ] = tostring(select(i,...))
@@ -97,14 +123,7 @@ conkat = function (...)
 end
 
 stringify = function(source, depth, formatter)
-  --[[
-  Convert the source to a readable string , based on it's type.
 
-  Args:
-    source(any): any type
-    depth(int): recursive level of stringify
-    settings(Formatter or nil): configure how source is formatted
-  ]]
   if not formatter then
     formatter = Formatter:new()
   end
@@ -136,23 +155,6 @@ stringify = function(source, depth, formatter)
 end
 
 table2string = function(tablevalue, depth, settings)
-    --[[
-  Convert a table to human readable string.
-  By default formatted on multiples lines for clarity. Specify tdtype=oneline
-    to get no line breaks.
-  If the key is a number, only the value is kept.
-  If the key is something else, it is formatted to "stringify(key)=stringify(value),"
-  If the table is too long (max_length), it is formatted as oneline
-
-  Args:
-    tablevalue(table): table to convert to string
-    index(int): recursive level of conversions used for indents
-    settings(Formatter or nil):
-      Configure how table are displayed.
-
-  Returns:
-    string:
-  ]]
 
   -- check if table is empty
   if next(tablevalue) == nil then
@@ -239,13 +241,6 @@ table2string = function(tablevalue, depth, settings)
 end
 
 round = function(num, numDecimalPlaces)
-  --[[
-  Source: http://lua-users.org/wiki/SimpleRound
-  Parameters:
-    num(number): number to round
-    numDecimalPlaces(number): number of decimal to keep
-  Returns: number
-  ]]
   return tonumber(
       stringformat(
           conkat("%.", (numDecimalPlaces or 0), "f"),
@@ -254,22 +249,10 @@ round = function(num, numDecimalPlaces)
   )
 end
 
+--- Replace the given <token> existing or not in the <source> with the given <value>.
+
 tokenReplace = function(token, source, value)
-  --[[
-  Replace the given <token> existing or not in the <source> with the given <value>.
 
-  token are expressed as "{token}" in <source> but also as "{token:args}" where
-  "args" are passed to string.format (https://en.cppreference.com/w/c/io/fprintf#Parameters)
-
-  Args:
-    token(string): token to find in source
-    source(string): template string where we can find the token
-    value(string): any string to replace the token with
-
-  Returns:
-    string:
-      source argument with the given <token> replace by <value> if <token> found.
-  ]]
   local format_arg = source:match(("{%s:([^}]+)}"):format(token))
   local replace_with = "%s"
   if format_arg then
@@ -278,54 +261,47 @@ tokenReplace = function(token, source, value)
   replace_with = replace_with:format(value)
   local replaced = source:gsub(("{%s[^}]*}"):format(token), replace_with)
   return replaced
+
 end
 
-
+--- The logger message formatter. Configure how message are displayed.
 function Formatter:new(template)
-  --[[
-  The logger message formatter. Configure how message are displayed.
-  ]]
 
   -- these are the default values
   local attrs = {
 
     ["blocks_duplicate"] = true,
 
+    --- see https://www.lua.org/pil/22.1.html for available tokens
     ["time_format"] = "%c",  -- %c ~= "09/16/98 23:48:10"
-    --[[
-    see https://www.lua.org/pil/22.1.html for available tokens
-    ]]
 
+    ---tokens available are :
+    ---[time, message, logger, level, appctx]
+    ---
+    ---check https://en.cppreference.com/w/c/io/fprintf#Parameters for what
+    ---string formatting arg are available (defined after the ":")
     ["template"] = "[{level:-7}] {time} [{appctx}][{logger}]{message}",
-    --[[
-    tokens available are :
-    [time, message, logger, level, appctx]
 
-    check https://en.cppreference.com/w/c/io/fprintf#Parameters for what
-    string formatting arg are available (defined after the ":")
-    ]]
+    --- tokens available are :
+    --- [time ,logger, appctx ,nrepeat]
+    ---
+    --- check https://en.cppreference.com/w/c/io/fprintf#Parameters for what
+    --- string formatting arg are available (defined after the ":")
     ["template_duplicate"] = "    [{logger}] The last message was repeated <{nrepeat}> times ...",
-    --[[
-    tokens available are :
-    [time ,logger, appctx ,nrepeat]
-
-    check https://en.cppreference.com/w/c/io/fprintf#Parameters for what
-    string formatting arg are available (defined after the ":")
-    ]]
 
     ["numbers"] = {
+      --- how much decimals should be kept for floating point numbers
       ["round"] = 3
-      -- how much decimals should be kept for floating point numbers
     },
     ["tables"] = {
+      --- how much whitespaces is considered an indent
       ["indent"] = 4,
-      -- how much whitespaces is considered an indent
+      --- maximum number of table element that can be displayed before being "cut"
       ["max_length"] = 999,
-      -- maximum number of table element that can be displayed before being "cut"
+      --- max table size before displaying it as oneline to avoid flooding
       ["linebreak_treshold"] = 50,
-      -- max table size before displaying it as oneline to avoid flooding
+      --- true to display the table on multiples lines with indents
       ["linebreaks"] = true,
-      -- true to display the table on multiples lines with indents
       ["display_indexes"] = false,
       ["display_functions"] = true
     },
@@ -338,14 +314,13 @@ function Formatter:new(template)
     attrs["template"] = template
   end
 
+  --- Return the string to log for the given parameters.
+  --- They will be applied on the template.
+  --- @param message string
+  --- @param level string level name
+  --- @param logger string name of the logger
+  --- @return string
   function attrs:format(message, level, logger)
-    --[[
-    Return the string to log for the given parameters.
-    They will be applied on the template.
-
-    Returns:
-      string:
-    ]]
     local out = self.template
     local time = os.date(self.time_format)
     out = tokenReplace("time", out, time)
@@ -356,14 +331,12 @@ function Formatter:new(template)
     return out
   end
 
+  --- Return the string to log to inform that the previous message has been
+  --- repeated ``repeated`` number of times.
+  --- @param logger string name of the logger
+  --- @param repeated number
+  --- @return string
   function attrs:formatDuplicate(logger, repeated)
-    --[[
-    Return the string to log to inform that the previous message has been
-    repeated <repeated> number of times.
-
-    Returns:
-      string:
-    ]]
     local out = self.template_duplicate
     local time = os.date(self.time_format)
     out = tokenReplace("time", out, time)
@@ -373,53 +346,55 @@ function Formatter:new(template)
     return out
   end
 
+  --- @param tmpl string template for displaying message, with tokens.
   function attrs:set_template(tmpl)
-    -- tmpl(string): template for displaying message, with tokens.
     self.template = tmpl
   end
 
+  --- @param enable boolean true to enable blocking of repeated messages
   function attrs:set_blocks_duplicate(enable)
-    -- enable(bool): true to enable blocking of repeated messages
     self.blocks_duplicate = enable
   end
 
+  --- @param round_value number
   function attrs:set_num_round(round_value)
     -- round_value(int):
     self.numbers.round = round_value
   end
 
+  --- @param display_value boolean
   function attrs:set_str_display_quotes(display_value)
     -- display_value(bool):
     self.strings.display_quotes = display_value
   end
 
+  --- @param display_value boolean
   function attrs:set_tbl_display_indexes(display_value)
-    -- display_value(bool):
     self.tables.display_indexes = display_value
   end
 
+  --- @param display_value boolean
   function attrs:set_tbl_linebreaks(display_value)
-    -- display_value(bool):
     self.tables.linebreaks = display_value
   end
 
+  --- @param length number int
   function attrs:set_tbl_max_length(length)
-    -- length(int):
     self.tables.max_length = length
   end
 
+  --- @param linebreak_treshold number int
   function attrs:set_tbl_linebreak_treshold(linebreak_treshold)
-    -- linebreak_treshold(int):
     self.tables.linebreak_treshold = linebreak_treshold
   end
 
+  --- @param indent number int
   function attrs:set_tbl_indent(indent)
-    -- indent(int):
     self.tables.indent = indent
   end
 
+  --- @param display_value boolean
   function attrs:set_tbl_display_functions(display_value)
-    -- display_value(bool):
     self.tables.display_functions = display_value
   end
 
@@ -427,33 +402,24 @@ function Formatter:new(template)
 
 end
 
-
+--- Display logging messages using an instance of this class.
+--- @param name string name of the logger to be displayed on every message
 function Logger:new(name)
-  --[[
-  Display logging messages using an instance of this class.
-
-  Args:
-	  name(str): name of the logger to be displayed on every message
-
-	Attributes:
-	  name(str):
-	  formatting(StrFmtSettings):
-	  _level(table): current log level being used
-	  __last(str or false): last message logged
-	  __lastnum(num): number of times the last message was repeated
-  ]]
 
   local attrs = {
     name = name,
     formatter = Formatter:new(),
+    --- table current log level being used
     _level = LEVELS.INFO,
+    --- string last message logged
     __last = false,
+    --- number of times the last message was repeated
     __lastnum = 0,
 
   }
 
+  --- @param level string|nil see LEVELS keys for values available
   function attrs:setLevel(level)
-    -- level(string or nil): see LEVELS keys for values available
 
     if level == nil then
       return
@@ -467,8 +433,8 @@ function Logger:new(name)
 
   end
 
+  --- @param formatter Formatter instance of the Formatter class to use
   function attrs:setFormatter(formatter)
-    -- formatter(Formatter): instance of the Formatter class to use
 
     if formatter == nil then
       return
@@ -477,14 +443,9 @@ function Logger:new(name)
 
   end
 
+  --- @param level table level object as defined in LEVELS
+  --- @param messages table list of object to display as message or a single object
   function attrs:_log(level, messages)
-    --[[
-    Args:
-      level(table): level object as defined in LEVELS
-      messages(table): list of object to display as message or a single object
-      ctx(str or nil): from where the log function is executed.
-        Only used for error level, else used
-    ]]
 
     if LEVEL_OVERRIDE then
       self._level = LEVEL_OVERRIDE
@@ -511,11 +472,9 @@ function Logger:new(name)
 
   end
 
+  --- Call the print function but before check if the message is repeated
+  --- to avoid flooding. (if enable)
   function attrs:_print(message)
-    --[[
-    Call the print function but before check if the message is repeated
-    to avoid flooding. (if enable)
-    ]]
 
     -- we dont need all the later stuff if settings disable it
     if self.formatter.blocks_duplicate == false then
@@ -567,20 +526,12 @@ end
 -- PUBLIC FUNCTIONS
 
 
+--- Return the logger for the given name.
+--- If no instance is existing, create a new one.
+--- @param name string name of the logger to create/retrieve
+--- @param force_new boolean if True, force the creation of a new instance even if its already exists
+--- @return Logger logger class instance
 function _M_.getLogger(name, force_new)
-  --[[
-  Return the logger for the given name.
-  If no instance is existing, create a new one.
-
-  Args:
-    name(string): name of the logger to create/retrieve
-    force_new(boolean):
-      if True, force the creation of a new instance even if its already exists
-
-  Returns:
-    Logger:
-        logger class instance
-  ]]
 
   local logger_instance
   local logger_index
@@ -604,14 +555,10 @@ function _M_.getLogger(name, force_new)
 
 end
 
+--- Set the logging LEVEL to multiple logger starting with the given name.
+--- @param name string  start of the name of the logger
+--- @param level table table in LEVELS
 function _M_.propagateLoggerLevel(name, level)
-  --[[
-  Set the logging LEVEL to multiple logger starting with the given name.
-
-  Args:
-    name(string): start of the name of the logger
-    level(LEVELS): table in LEVELS
-  ]]
 
   for _, lllogger in pairs(__loggers) do
     if string.match(lllogger.name, ("^%s"):format(name)) then

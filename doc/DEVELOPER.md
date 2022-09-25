@@ -6,16 +6,16 @@
 
 Section related to code development.
 
-Code mostly try to follow Python standards (PEP) for syntax.
 Indent used are `2` white-space.
 
-By default of not knowing what are the lua standard for documenting code
-with type hints, I used the python ones which are Google style docstrings.
+# type-hints
 
-
-Tested on `Lua 5.1.5`.
+Type hinting is performed using [EmmyLua - EmmyLua for IntelliJ IDEA 1.3.2 documentation](https://emmylua.github.io/index.html)
+which is itself similar to [LDoc](https://stevedonovan.github.io/ldoc/manual/doc.md.html).
 
 ## Tests
+
+Tested on `Lua 5.1.5`.
 
 There is no actually proper unittest that will raise errors but you have at least
 a test file in [../tests/test_lllogger.lua](../tests/test_lllogger.lua) that you
